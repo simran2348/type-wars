@@ -2,6 +2,7 @@ import * as Phaser from 'phaser';
 import type { Playfield } from '../playfield';
 import type { TypingTarget } from '../systems/TypingSystem';
 import { COLORS, CSS, FONTS, TEXTURES } from '../theme';
+import { addText } from '../ui/text';
 
 export type MeteorState = 'active' | 'destroyed' | 'missed';
 
@@ -59,14 +60,15 @@ export class Meteor
     const style: Phaser.Types.GameObjects.Text.TextStyle = {
       fontFamily: FONTS.mono,
       fontSize: `${config.fontSize}px`,
-      fontStyle: 'bold',
     };
-    this.typedText = scene.add
-      .text(0, 0, '', { ...style, color: CSS.accent })
-      .setOrigin(0, 0.5);
-    this.restText = scene.add
-      .text(0, 0, this.word, { ...style, color: CSS.text })
-      .setOrigin(0, 0.5);
+    this.typedText = addText(scene, 0, 0, '', {
+      ...style,
+      color: CSS.accent,
+    }).setOrigin(0, 0.5);
+    this.restText = addText(scene, 0, 0, this.word, {
+      ...style,
+      color: CSS.text,
+    }).setOrigin(0, 0.5);
     this.charWidth = this.restText.width / this.word.length;
     this.pill = scene.add.graphics();
     this.label = scene.add.container(0, this.radius * 0.6, [

@@ -1,9 +1,33 @@
 import { Hono } from 'hono';
 import { reddit } from '@devvit/web/server';
-import type { ErrorResponse, SubmitScoreResponse } from '../../shared/api';
+import type {
+  ErrorResponse,
+  LeaderboardResponse,
+  SubmitScoreResponse,
+} from '../../shared/api';
 import { getLeaderboards, parseScore, recordScore } from '../core/leaderboard';
 
 export const api = new Hono();
+
+/** Both leaderboards plus the viewer's Reddit username. */
+api.get('/leaderboard', async (c) => {
+  try {
+    const [username, leaderboards] = await Promise.all([
+      reddit.getCurrentUsername(),
+      getLeaderboards(),
+    ]);
+    return c.json<LeaderboardResponse>({
+      username: username ?? null,
+      leaderboards,
+    });
+  } catch (error) {
+    console.error('Leaderboard fetch failed:', error);
+    return c.json<ErrorResponse>(
+      { status: 'error', message: 'Could not load leaderboards' },
+      500
+    );
+  }
+});
 
 /**
  * Submits the finished run's score and returns both leaderboards.

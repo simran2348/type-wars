@@ -1,7 +1,10 @@
 import * as Phaser from 'phaser';
+import { TEXTURE_SCALE } from '../textures';
 import { CSS, FONTS, TEXTURES } from '../theme';
+import { addText } from './text';
 
 const MARGIN = 16;
+const LIFE_SPACING = 30;
 
 export type HudState = {
   score: number;
@@ -12,7 +15,6 @@ export type HudState = {
 
 /** Score, combo, lives and the sound toggle. Kept deliberately sparse. */
 export class Hud {
-  private readonly scoreLabel: Phaser.GameObjects.Text;
   private readonly scoreText: Phaser.GameObjects.Text;
   private readonly comboText: Phaser.GameObjects.Text;
   private readonly soundText: Phaser.GameObjects.Text;
@@ -28,41 +30,39 @@ export class Hud {
     onToggleSound: () => boolean
   ) {
     this.lives = maxLives;
-    this.scoreLabel = scene.add
-      .text(MARGIN, MARGIN, 'SCORE', {
-        fontFamily: FONTS.ui,
-        fontSize: '12px',
-        fontStyle: 'bold',
-        color: CSS.muted,
-      })
-      .setLetterSpacing(2);
-    this.scoreText = scene.add.text(MARGIN, MARGIN + 14, '0', {
+    const scoreLabel = addText(scene, MARGIN, MARGIN, 'SCORE', {
+      fontFamily: FONTS.display,
+      fontSize: '11px',
+      fontStyle: '700',
+      color: CSS.accent,
+    }).setLetterSpacing(3);
+    // Orbitron's slashed zero reads like an icon, so numbers use the mono face.
+    this.scoreText = addText(scene, MARGIN, MARGIN + 12, '0', {
       fontFamily: FONTS.mono,
       fontSize: '28px',
-      fontStyle: 'bold',
       color: CSS.text,
     });
-    this.comboText = scene.add
-      .text(MARGIN, MARGIN + 52, '', {
-        fontFamily: FONTS.ui,
-        fontSize: '16px',
-        fontStyle: 'bold',
-        color: CSS.accent,
-      })
-      .setLetterSpacing(1)
+    this.comboText = addText(scene, MARGIN, MARGIN + 46, '', {
+      fontFamily: FONTS.display,
+      fontSize: '13px',
+      fontStyle: '700',
+      color: CSS.accent,
+    })
+      .setLetterSpacing(2)
       .setVisible(false);
     this.lifeIcons = Array.from({ length: maxLives }, () =>
-      scene.add.image(0, MARGIN + 16, TEXTURES.ship).setScale(0.42)
+      scene.add
+        .image(0, MARGIN + 14, TEXTURES.ship)
+        .setScale(0.4 * TEXTURE_SCALE)
     );
-    this.soundText = scene.add
-      .text(0, 0, '', {
-        fontFamily: FONTS.ui,
-        fontSize: '12px',
-        fontStyle: 'bold',
-        color: CSS.muted,
-      })
+    this.soundText = addText(scene, 0, 0, '', {
+      fontFamily: FONTS.display,
+      fontSize: '10px',
+      fontStyle: '700',
+      color: CSS.muted,
+    })
       .setOrigin(1, 1)
-      .setLetterSpacing(1)
+      .setLetterSpacing(2)
       .setInteractive({ useHandCursor: true })
       .on(Phaser.Input.Events.GAMEOBJECT_POINTER_UP, () =>
         this.setMuted(onToggleSound())
@@ -70,18 +70,19 @@ export class Hud {
     this.setMuted(muted);
 
     [
-      this.scoreLabel,
+      scoreLabel,
       this.scoreText,
       this.comboText,
       this.soundText,
       ...this.lifeIcons,
     ].forEach((o) => o.setDepth(100));
-    this.layout(scene.scale.width, scene.scale.height);
   }
 
   layout(width: number, height: number): void {
     this.lifeIcons.forEach((icon, i) =>
-      icon.setX(width - MARGIN - 14 - (this.lifeIcons.length - 1 - i) * 32)
+      icon.setX(
+        width - MARGIN - 13 - (this.lifeIcons.length - 1 - i) * LIFE_SPACING
+      )
     );
     this.soundText.setPosition(width - MARGIN, height - MARGIN);
   }

@@ -1,5 +1,8 @@
 import * as Phaser from 'phaser';
+import { TEXTURE_SCALE } from '../textures';
 import { COLORS, TEXTURES } from '../theme';
+
+const ENGINE_GLOW = 0xff7a3d;
 
 const MAX_AIM_ANGLE = 0.6;
 const NOSE_OFFSET = 30;
@@ -18,14 +21,15 @@ export class Ship extends Phaser.GameObjects.Container {
     this.flame = scene.add
       .image(0, 26, TEXTURES.flame)
       .setOrigin(0.5, 0)
+      .setScale(TEXTURE_SCALE)
       .setBlendMode(Phaser.BlendModes.ADD);
     const engineGlow = scene.add
       .image(0, 34, TEXTURES.glow)
-      .setTint(COLORS.cyan)
+      .setTint(ENGINE_GLOW)
       .setAlpha(0.35)
-      .setScale(0.5)
+      .setDisplaySize(64, 64)
       .setBlendMode(Phaser.BlendModes.ADD);
-    this.hull = scene.add.image(0, 0, TEXTURES.ship);
+    this.hull = scene.add.image(0, 0, TEXTURES.ship).setScale(TEXTURE_SCALE);
     this.craft = scene.add.container(0, 0, [engineGlow, this.flame, this.hull]);
     this.add(this.craft);
 
@@ -74,7 +78,10 @@ export class Ship extends Phaser.GameObjects.Container {
 
   preUpdate(_time: number, delta: number): void {
     const dt = delta / 1000;
-    this.flame.setScale(0.85 + Math.random() * 0.3, 0.8 + Math.random() * 0.45);
+    this.flame.setScale(
+      (0.85 + Math.random() * 0.3) * TEXTURE_SCALE,
+      (0.8 + Math.random() * 0.45) * TEXTURE_SCALE
+    );
 
     // Drift back to facing straight up after a short pause.
     this.aimHold -= dt;

@@ -1,6 +1,16 @@
 import type { Scene } from 'phaser';
 import { TEXTURES } from './theme';
 
+/**
+ * Textures are painted at this multiple of their logical size so they stay
+ * sharp when cameras zoom in on high-density screens. Images using them
+ * should be displayed at `TEXTURE_SCALE` (or via setDisplaySize).
+ */
+export const TEXTURE_RESOLUTION = 3;
+export const TEXTURE_SCALE = 1 / TEXTURE_RESOLUTION;
+/** Star tiles are large, so they use a lower resolution to save memory. */
+export const STARS_RESOLUTION = 2;
+
 type Painter = (
   ctx: CanvasRenderingContext2D,
   width: number,
@@ -12,16 +22,23 @@ const paint = (
   key: string,
   width: number,
   height: number,
-  painter: Painter
+  painter: Painter,
+  resolution = TEXTURE_RESOLUTION
 ) => {
   if (scene.textures.exists(key)) {
     return;
   }
-  const texture = scene.textures.createCanvas(key, width, height);
+  const texture = scene.textures.createCanvas(
+    key,
+    width * resolution,
+    height * resolution
+  );
   if (!texture) {
     throw new Error(`Could not create texture "${key}"`);
   }
-  painter(texture.getContext(), width, height);
+  const ctx = texture.getContext();
+  ctx.scale(resolution, resolution);
+  painter(ctx, width, height);
   texture.refresh();
 };
 
@@ -35,6 +52,7 @@ const softDot = (ctx: CanvasRenderingContext2D, size: number) => {
   ctx.fillRect(0, 0, size, size);
 };
 
+/** Starfighter in rebel colours: white-grey hull with red markings. */
 const ship: Painter = (ctx) => {
   ctx.beginPath();
   ctx.moveTo(32, 3);
@@ -48,41 +66,42 @@ const ship: Painter = (ctx) => {
   ctx.lineTo(23, 26);
   ctx.closePath();
   const hull = ctx.createLinearGradient(0, 0, 0, 64);
-  hull.addColorStop(0, '#f2fbff');
-  hull.addColorStop(0.45, '#69c6ff');
-  hull.addColorStop(1, '#22318a');
+  hull.addColorStop(0, '#ffffff');
+  hull.addColorStop(0.5, '#c9ced6');
+  hull.addColorStop(1, '#5d6470');
   ctx.fillStyle = hull;
   ctx.fill();
-  ctx.lineWidth = 1.5;
-  ctx.strokeStyle = '#bff1ff';
+  ctx.lineWidth = 1.2;
+  ctx.strokeStyle = '#3a3f49';
   ctx.stroke();
 
-  // Wing stripes
-  ctx.strokeStyle = '#ffb547';
-  ctx.lineWidth = 2;
+  // Red squadron stripes
+  ctx.strokeStyle = '#e23b2e';
+  ctx.lineWidth = 2.5;
   ctx.beginPath();
-  ctx.moveTo(14, 50);
-  ctx.lineTo(22, 40);
-  ctx.moveTo(50, 50);
-  ctx.lineTo(42, 40);
+  ctx.moveTo(12, 52);
+  ctx.lineTo(21, 41);
+  ctx.moveTo(52, 52);
+  ctx.lineTo(43, 41);
   ctx.stroke();
 
   // Cockpit
   ctx.beginPath();
   ctx.ellipse(32, 31, 4.5, 10, 0, 0, Math.PI * 2);
-  ctx.fillStyle = '#0a1033';
+  ctx.fillStyle = '#11141b';
   ctx.fill();
   ctx.beginPath();
   ctx.ellipse(30.5, 27, 1.5, 4, 0, 0, Math.PI * 2);
-  ctx.fillStyle = 'rgba(160,235,255,0.85)';
+  ctx.fillStyle = 'rgba(160,220,255,0.8)';
   ctx.fill();
 };
 
+/** Engine exhaust: hot white core fading to orange-red. */
 const flame: Painter = (ctx, w, h) => {
   const gradient = ctx.createLinearGradient(0, 0, 0, h);
   gradient.addColorStop(0, 'rgba(255,255,255,1)');
-  gradient.addColorStop(0.25, 'rgba(120,230,255,0.9)');
-  gradient.addColorStop(1, 'rgba(40,90,255,0)');
+  gradient.addColorStop(0.25, 'rgba(255,170,120,0.9)');
+  gradient.addColorStop(1, 'rgba(255,60,40,0)');
   ctx.fillStyle = gradient;
   ctx.beginPath();
   ctx.moveTo(w * 0.15, 0);
@@ -125,13 +144,13 @@ const meteor =
       cy,
       w * 0.48
     );
-    body.addColorStop(0, '#9a8a7c');
-    body.addColorStop(0.55, '#5a4c44');
-    body.addColorStop(1, '#2a221f');
+    body.addColorStop(0, '#8f8a84');
+    body.addColorStop(0.55, '#4f4b47');
+    body.addColorStop(1, '#1f1d1c');
     ctx.fillStyle = body;
     ctx.fill();
     ctx.lineWidth = 2;
-    ctx.strokeStyle = 'rgba(255,190,140,0.35)';
+    ctx.strokeStyle = 'rgba(255,232,31,0.25)';
     ctx.stroke();
 
     for (let i = 0; i < 4; i++) {
@@ -140,32 +159,33 @@ const meteor =
       const r = w * (0.05 + rand() * 0.06);
       ctx.beginPath();
       ctx.arc(x, y, r, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(25,18,15,0.55)';
+      ctx.fillStyle = 'rgba(15,14,13,0.55)';
       ctx.fill();
       ctx.beginPath();
       ctx.arc(x + r * 0.2, y + r * 0.2, r, Math.PI * 0.1, Math.PI * 0.9);
-      ctx.strokeStyle = 'rgba(200,170,140,0.35)';
+      ctx.strokeStyle = 'rgba(200,195,185,0.35)';
       ctx.lineWidth = 1.5;
       ctx.stroke();
     }
   };
 
+/** Blaster bolt: white core inside a green glow. */
 const bullet: Painter = (ctx, w, h) => {
   const glow = ctx.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, h / 2);
-  glow.addColorStop(0, 'rgba(160,240,255,0.9)');
-  glow.addColorStop(1, 'rgba(60,180,255,0)');
+  glow.addColorStop(0, 'rgba(150,255,160,0.95)');
+  glow.addColorStop(1, 'rgba(60,255,90,0)');
   ctx.fillStyle = glow;
   ctx.beginPath();
   ctx.ellipse(w / 2, h / 2, w / 2, h / 2, 0, 0, Math.PI * 2);
   ctx.fill();
   ctx.fillStyle = '#ffffff';
   ctx.beginPath();
-  ctx.ellipse(w / 2, h / 2, w * 0.18, h * 0.36, 0, 0, Math.PI * 2);
+  ctx.ellipse(w / 2, h / 2, w * 0.18, h * 0.38, 0, 0, Math.PI * 2);
   ctx.fill();
 };
 
 const chunk: Painter = (ctx) => {
-  ctx.fillStyle = '#b8a291';
+  ctx.fillStyle = '#a8a29a';
   ctx.beginPath();
   ctx.moveTo(1, 3);
   ctx.lineTo(5, 0);
@@ -197,7 +217,7 @@ const stars =
     for (let i = 0; i < count; i++) {
       const radius = minRadius + Math.random() * (maxRadius - minRadius);
       const alpha = minAlpha + Math.random() * (1 - minAlpha);
-      const tint = Math.random() < 0.2 ? '170,200,255' : '255,255,255';
+      const tint = Math.random() < 0.15 ? '200,220,255' : '255,255,255';
       ctx.fillStyle = `rgba(${tint},${alpha})`;
       ctx.beginPath();
       ctx.arc(Math.random() * w, Math.random() * h, radius, 0, Math.PI * 2);
@@ -212,11 +232,25 @@ export const createTextures = (scene: Scene): void => {
   TEXTURES.meteors.forEach((key, i) =>
     paint(scene, key, 96, 96, meteor(i + 1))
   );
-  paint(scene, TEXTURES.bullet, 12, 34, bullet);
+  paint(scene, TEXTURES.bullet, 10, 34, bullet);
   paint(scene, TEXTURES.spark, 16, 16, (ctx, w) => softDot(ctx, w));
   paint(scene, TEXTURES.glow, 128, 128, (ctx, w) => softDot(ctx, w));
   paint(scene, TEXTURES.chunk, 10, 10, chunk);
   paint(scene, TEXTURES.ring, 128, 128, ring);
-  paint(scene, TEXTURES.starsFar, 512, 512, stars(110, 0.4, 0.9, 0.2));
-  paint(scene, TEXTURES.starsNear, 512, 512, stars(28, 0.9, 1.6, 0.5));
+  paint(
+    scene,
+    TEXTURES.starsFar,
+    512,
+    512,
+    stars(130, 0.35, 0.8, 0.2),
+    STARS_RESOLUTION
+  );
+  paint(
+    scene,
+    TEXTURES.starsNear,
+    512,
+    512,
+    stars(30, 0.8, 1.4, 0.5),
+    STARS_RESOLUTION
+  );
 };

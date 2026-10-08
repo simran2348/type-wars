@@ -18,6 +18,6 @@ export const playfieldFor = (width: number, height: number): Playfield => {
     shipX: width / 2,
     shipY,
     dangerY: shipY - 46,
-    wordFontSize: Math.round(Math.min(26, Math.max(17, width / 36))),
+    wordFontSize: Math.round(Math.min(26, Math.max(19, width / 34))),
   };
 };

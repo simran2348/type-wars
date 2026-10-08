@@ -1,4 +1,5 @@
 import * as Phaser from 'phaser';
+import { TEXTURE_SCALE } from '../textures';
 import { TEXTURES } from '../theme';
 import type { Meteor } from './Meteor';
 
@@ -26,6 +27,7 @@ export class Bullets {
       this.pool.pop() ??
       this.scene.add
         .image(0, 0, TEXTURES.bullet)
+        .setScale(TEXTURE_SCALE)
         .setBlendMode(Phaser.BlendModes.ADD)
         .setDepth(5);
     sprite.setPosition(x, y).setActive(true).setVisible(true);

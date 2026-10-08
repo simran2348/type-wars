@@ -14,9 +14,11 @@ subreddit's **Today's Best** (UTC day) and **All Time** leaderboards.
 
 ## Project layout
 
-- `src/client/scenes`: Boot (procedural textures), Background (starfield), MainMenu, Game, GameOver (overlay)
+- `src/client/scenes`: Boot (textures, fonts), Background (starfield), MainMenu, Instructions, Leaderboard, Game, GameOver (overlay)
+- `src/client/view.ts`: device-pixel rendering and the smaller touch-screen scale
 - `src/client/entities`: Ship, Meteor, pooled Bullets
 - `src/client/systems`: typing, meteor spawning, difficulty, scoring/combo, word picking, effects, sound
+- `src/client/input/touchKeyboard.ts`: on-screen keyboard support for phones and tablets
 - `src/client/data/words.ts`: curated word bank (easy / medium / hard / expert)
 - `src/server/core/leaderboard.ts`: score validation and Redis-backed leaderboards
 - `src/shared/api.ts`: types shared by client and server

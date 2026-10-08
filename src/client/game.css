@@ -1,7 +1,14 @@
+/* Fonts are bundled locally: Reddit's sandbox may block font CDNs. */
+@import '@fontsource/orbitron/latin-700.css';
+@import '@fontsource/orbitron/latin-900.css';
+@import '@fontsource/news-cycle/latin-400.css';
+@import '@fontsource/news-cycle/latin-700.css';
+@import '@fontsource/share-tech-mono/latin-400.css';
+
 body {
   margin: 0;
   padding: 0;
-  background-color: #050714;
+  background-color: #000000;
 }
 
 #app {
@@ -13,4 +20,33 @@ body {
 #game-container {
   width: 100%;
   height: 100%;
+}
+
+#game-container canvas {
+  display: block;
+}
+
+/* Invisible but focusable, so mobile browsers open their keyboard. */
+#touch-keyboard {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  border: 0;
+  opacity: 0;
+  /* 16px stops iOS from zooming the page when the field is focused. */
+  font-size: 16px;
+  caret-color: transparent;
+  pointer-events: none;
+}
+
+/* During play on touch devices: a tap anywhere above the bottom strip lands on
+   the field, which opens the keyboard natively. The strip keeps the sound
+   toggle reachable. */
+#touch-keyboard.active {
+  width: 100%;
+  height: calc(100% - 48px);
+  pointer-events: auto;
 }

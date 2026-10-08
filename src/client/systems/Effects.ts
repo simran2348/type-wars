@@ -1,5 +1,7 @@
 import * as Phaser from 'phaser';
+import { TEXTURE_SCALE } from '../textures';
 import { COLORS, CSS, FONTS, TEXTURES } from '../theme';
+import { addText } from '../ui/text';
 
 type Emitter = Phaser.GameObjects.Particles.ParticleEmitter;
 
@@ -18,8 +20,8 @@ export class Effects {
       .particles(0, 0, TEXTURES.spark, {
         lifespan: 220,
         speed: { min: 60, max: 220 },
-        scale: { start: 0.55, end: 0 },
-        tint: [0xffffff, COLORS.cyan],
+        scale: { start: 0.55 * TEXTURE_SCALE, end: 0 },
+        tint: [0xffffff, COLORS.bolt],
         blendMode: Phaser.BlendModes.ADD,
         emitting: false,
       })
@@ -28,9 +30,9 @@ export class Effects {
       .particles(0, 0, TEXTURES.spark, {
         lifespan: { min: 300, max: 600 },
         speed: { min: 80, max: 340 },
-        scale: { start: 1.4, end: 0 },
+        scale: { start: 1.4 * TEXTURE_SCALE, end: 0 },
         alpha: { start: 1, end: 0 },
-        tint: [0xffffff, 0xffd27a, COLORS.accent, 0xff7a3d],
+        tint: [0xffffff, 0xfff3a0, COLORS.accent, 0xff8a2a],
         blendMode: Phaser.BlendModes.ADD,
         emitting: false,
       })
@@ -40,7 +42,7 @@ export class Effects {
         lifespan: { min: 500, max: 900 },
         speed: { min: 60, max: 240 },
         rotate: { min: 0, max: 360 },
-        scale: { start: 1.2, end: 0.3 },
+        scale: { start: 1.2 * TEXTURE_SCALE, end: 0.3 * TEXTURE_SCALE },
         alpha: { start: 1, end: 0 },
         emitting: false,
       })
@@ -49,7 +51,7 @@ export class Effects {
       .particles(0, 0, TEXTURES.spark, {
         lifespan: { min: 300, max: 700 },
         speed: { min: 100, max: 380 },
-        scale: { start: 1.6, end: 0 },
+        scale: { start: 1.6 * TEXTURE_SCALE, end: 0 },
         alpha: { start: 1, end: 0 },
         tint: [0xffffff, COLORS.danger, 0xff2244],
         blendMode: Phaser.BlendModes.ADD,
@@ -65,7 +67,7 @@ export class Effects {
   explode(x: number, y: number, radius: number): void {
     this.fire.explode(18, x, y);
     this.debris.explode(10, x, y);
-    this.shockwave(x, y, radius * 3.2, 0xffd27a);
+    this.shockwave(x, y, radius * 3.2, COLORS.accent);
   }
 
   /** A meteor reached the ship. */
@@ -85,15 +87,14 @@ export class Effects {
   }
 
   scorePopup(x: number, y: number, text: string): void {
-    const popup = this.scene.add
-      .text(x, y, text, {
-        fontFamily: FONTS.ui,
-        fontSize: '20px',
-        fontStyle: 'bold',
-        color: CSS.accent,
-        stroke: '#000000',
-        strokeThickness: 4,
-      })
+    const popup = addText(this.scene, x, y, text, {
+      fontFamily: FONTS.display,
+      fontSize: '16px',
+      fontStyle: '900',
+      color: CSS.accent,
+      stroke: CSS.black,
+      strokeThickness: 4,
+    })
       .setOrigin(0.5)
       .setDepth(8);
     this.scene.tweens.add({

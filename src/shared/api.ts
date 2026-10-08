@@ -17,12 +17,15 @@ export type SubmitScoreRequest = {
   score: number;
 };
 
-export type SubmitScoreResponse = {
-  /** False when the score was not recorded (e.g. logged-out viewer). */
-  recorded: boolean;
-  /** The authenticated player's name, so the UI can highlight their rows. */
+export type LeaderboardResponse = {
+  /** The authenticated player's Reddit username, so the UI can highlight their rows. */
   username: string | null;
   leaderboards: Leaderboards;
+};
+
+export type SubmitScoreResponse = LeaderboardResponse & {
+  /** False when the score was not recorded (e.g. logged-out viewer). */
+  recorded: boolean;
 };
 
 export type ErrorResponse = {

@@ -49,7 +49,7 @@ export class MeteorSpawner {
 
   private spawn(difficulty: Difficulty, field: Playfield): void {
     const word = this.words.pick(difficulty.tierWeights, this.activeWords);
-    const startX = this.pickStartX();
+    const startX = this.pickStartX(field);
     this.activeWords.add(word);
     this.meteors.push(
       new Meteor(
@@ -68,10 +68,10 @@ export class MeteorSpawner {
   }
 
   /** Picks a lane far from meteors still near the top, so labels don't overlap. */
-  private pickStartX(): number {
+  private pickStartX(field: Playfield): number {
     const recent = this.meteors
       .filter((m) => m.travel < 0.35)
-      .map((m) => m.x / this.scene.scale.width);
+      .map((m) => m.x / field.width);
     let best = 0.5;
     let bestGap = -1;
     for (let i = 0; i < SPAWN_ATTEMPTS; i++) {

@@ -1,23 +1,39 @@
+/** Star Wars inspired palette: crawl yellow, saber blue, Sith red. */
 export const COLORS = {
-  accent: 0xffb547,
-  cyan: 0x5ce1ff,
-  danger: 0xff4d6d,
-  panel: 0x0b0f24,
-  panelBorder: 0x2c3460,
+  accent: 0xffe81f,
+  saber: 0x4bd5ee,
+  danger: 0xff2b2b,
+  bolt: 0x5dff6b,
+  panel: 0x06070b,
+  panelBorder: 0x2a2e38,
 } as const;
 
 export const CSS = {
-  text: '#f4f6ff',
-  muted: '#8a93b8',
-  accent: '#ffb547',
-  cyan: '#5ce1ff',
-  danger: '#ff4d6d',
+  text: '#f2f2f2',
+  muted: '#9aa0aa',
+  accent: '#ffe81f',
+  saber: '#4bd5ee',
+  danger: '#ff2b2b',
+  black: '#000000',
 } as const;
 
 export const FONTS = {
-  ui: '"Segoe UI", system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif',
-  mono: 'ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace',
+  /** Wide geometric display face for titles, HUD and buttons. */
+  display: '"Orbitron", "Segoe UI", system-ui, sans-serif',
+  /** Opening-crawl style face for body copy. */
+  body: '"News Cycle", "Franklin Gothic Medium", "Arial Narrow", sans-serif',
+  /** Monospace for meteor words and scores. */
+  mono: '"Share Tech Mono", ui-monospace, Menlo, Consolas, monospace',
 } as const;
+
+/** Fonts that must be ready before any Phaser text is drawn. */
+export const FONT_FACES = [
+  '700 16px Orbitron',
+  '900 16px Orbitron',
+  '400 16px "News Cycle"',
+  '700 16px "News Cycle"',
+  '400 16px "Share Tech Mono"',
+];
 
 export const TEXTURES = {
   ship: 'ship',

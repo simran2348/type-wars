@@ -1,103 +1,80 @@
 import * as Phaser from 'phaser';
-import { Scene } from 'phaser';
 import { Ship } from '../entities/Ship';
 import { playfieldFor } from '../playfield';
 import { COLORS, CSS, FONTS, TEXTURES } from '../theme';
 import { Button } from '../ui/Button';
 import { fitToViewport } from '../ui/layout';
+import { MenuScene } from '../ui/MenuScene';
+import { addText, addTitle } from '../ui/text';
 
-const DESIGN_WIDTH = 560;
-const DESIGN_HEIGHT = 420;
-
-export class MainMenu extends Scene {
-  private content: Phaser.GameObjects.Container;
+export class MainMenu extends MenuScene {
+  protected readonly designWidth = 560;
+  protected readonly designHeight = 450;
   private ship: Ship;
 
   constructor() {
     super('MainMenu');
   }
 
-  create() {
-    const cx = DESIGN_WIDTH / 2;
-    const glow = this.add
-      .image(cx, 92, TEXTURES.glow)
-      .setTint(COLORS.cyan)
-      .setAlpha(0.18)
-      .setDisplaySize(520, 200)
-      .setBlendMode(Phaser.BlendModes.ADD);
-    const title = this.add
-      .text(cx, 92, 'TYPE WARS', {
-        fontFamily: FONTS.ui,
-        fontSize: '72px',
-        fontStyle: 'bold italic',
-        color: CSS.text,
-        stroke: '#1d3b8f',
-        strokeThickness: 6,
-      })
-      .setOrigin(0.5)
-      .setLetterSpacing(4);
-    const subtitle = this.add
-      .text(cx, 160, 'A TYPING SPACE SHOOTER', {
-        fontFamily: FONTS.ui,
-        fontSize: '16px',
-        fontStyle: 'bold',
-        color: CSS.cyan,
-      })
-      .setOrigin(0.5)
-      .setLetterSpacing(5);
-    const play = new Button(this, cx, 262, 'PLAY', () => this.startGame());
-    const hint = this.add
-      .text(cx, 352, 'Type the words on the meteors to destroy them.', {
-        fontFamily: FONTS.ui,
-        fontSize: '17px',
-        color: CSS.muted,
-      })
-      .setOrigin(0.5);
-
-    this.content = this.add.container(0, 0, [
-      glow,
-      title,
-      subtitle,
-      play,
-      hint,
-    ]);
+  protected build() {
+    const cx = this.designWidth / 2;
     this.ship = new Ship(this, 0, 0);
-
-    this.layout();
-    this.input.keyboard?.on(
-      Phaser.Input.Keyboard.Events.ANY_KEY_DOWN,
-      this.onKeyDown,
-      this
-    );
-    this.scale.on(Phaser.Scale.Events.RESIZE, this.layout, this);
-    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
-      this.input.keyboard?.off(
-        Phaser.Input.Keyboard.Events.ANY_KEY_DOWN,
-        this.onKeyDown,
-        this
-      );
-      this.scale.off(Phaser.Scale.Events.RESIZE, this.layout, this);
-    });
+    return [
+      this.add
+        .image(cx, 92, TEXTURES.glow)
+        .setTint(COLORS.accent)
+        .setAlpha(0.12)
+        .setDisplaySize(560, 200)
+        .setBlendMode(Phaser.BlendModes.ADD),
+      addTitle(this, cx, 92, 'TYPE WARS', 64),
+      addText(this, cx, 158, 'A TYPING SPACE SHOOTER', {
+        fontFamily: FONTS.display,
+        fontSize: '14px',
+        fontStyle: '700',
+        color: CSS.saber,
+      })
+        .setOrigin(0.5)
+        .setLetterSpacing(5),
+      new Button(this, cx, 250, 'PLAY', () => this.scene.start('Game'), {
+        opensKeyboard: true,
+      }),
+      new Button(
+        this,
+        cx - 128,
+        334,
+        'HOW TO PLAY',
+        () => this.scene.start('Instructions'),
+        { width: 236, height: 48, variant: 'secondary' }
+      ),
+      new Button(
+        this,
+        cx + 128,
+        334,
+        'LEADERBOARD',
+        () => this.scene.start('Leaderboard'),
+        { width: 236, height: 48, variant: 'secondary' }
+      ),
+      addText(this, cx, 410, 'Type the words on the meteors to destroy them.', {
+        fontFamily: FONTS.body,
+        fontSize: '18px',
+        color: CSS.muted,
+      }).setOrigin(0.5),
+    ];
   }
 
-  private onKeyDown(event: KeyboardEvent) {
+  protected override onKey(event: KeyboardEvent) {
     if (event.key === 'Enter') {
-      this.startGame();
+      this.scene.start('Game');
     }
   }
 
-  private startGame() {
-    this.scene.start('Game');
-  }
-
-  private layout() {
-    const { width, height } = this.scale;
+  /** Centers the menu in the space above the ship. */
+  protected override layoutContent(width: number, height: number) {
     const field = playfieldFor(width, height);
-    // Center the menu in the space above the ship.
     fitToViewport(
       this.content,
-      DESIGN_WIDTH,
-      DESIGN_HEIGHT,
+      this.designWidth,
+      this.designHeight,
       width,
       field.dangerY
     );

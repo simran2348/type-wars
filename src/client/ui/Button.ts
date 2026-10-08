@@ -1,5 +1,16 @@
 import * as Phaser from 'phaser';
-import { COLORS, FONTS, TEXTURES } from '../theme';
+import { touchKeyboard } from '../input/touchKeyboard';
+import { COLORS, CSS, FONTS, TEXTURES } from '../theme';
+import { addText } from './text';
+
+export type ButtonOptions = {
+  width?: number;
+  height?: number;
+  /** Primary: solid crawl-yellow. Secondary: yellow outline. */
+  variant?: 'primary' | 'secondary';
+  /** Starting gameplay opens the touch keyboard while still inside the tap. */
+  opensKeyboard?: boolean;
+};
 
 /** Rounded arcade button with hover and press feedback. */
 export class Button extends Phaser.GameObjects.Container {
@@ -9,36 +20,50 @@ export class Button extends Phaser.GameObjects.Container {
     y: number,
     label: string,
     onClick: () => void,
-    width = 240,
-    height = 60
+    {
+      width = 240,
+      height = 60,
+      variant = 'primary',
+      opensKeyboard = false,
+    }: ButtonOptions = {}
   ) {
     super(scene, x, y);
+    const primary = variant === 'primary';
 
-    const glow = scene.add
-      .image(0, 0, TEXTURES.glow)
-      .setTint(COLORS.accent)
-      .setAlpha(0.25)
-      .setDisplaySize(width * 1.6, height * 2.4)
-      .setBlendMode(Phaser.BlendModes.ADD);
     const background = scene.add.graphics();
-    background.fillStyle(COLORS.accent, 1);
-    background.fillRoundedRect(
-      -width / 2,
-      -height / 2,
-      width,
-      height,
-      height / 2
-    );
-    const text = scene.add
-      .text(0, 0, label, {
-        fontFamily: FONTS.ui,
-        fontSize: `${Math.round(height * 0.4)}px`,
-        fontStyle: 'bold',
-        color: '#1a1206',
-      })
+    if (primary) {
+      const glow = scene.add
+        .image(0, 0, TEXTURES.glow)
+        .setTint(COLORS.accent)
+        .setAlpha(0.2)
+        .setDisplaySize(width * 1.6, height * 2.4)
+        .setBlendMode(Phaser.BlendModes.ADD);
+      this.add(glow);
+      scene.tweens.add({
+        targets: glow,
+        alpha: 0.4,
+        duration: 900,
+        yoyo: true,
+        repeat: -1,
+        ease: 'Sine.easeInOut',
+      });
+      background.fillStyle(COLORS.accent, 1);
+      background.fillRoundedRect(-width / 2, -height / 2, width, height, 8);
+    } else {
+      background.fillStyle(COLORS.panel, 0.85);
+      background.fillRoundedRect(-width / 2, -height / 2, width, height, 8);
+      background.lineStyle(2, COLORS.accent, 1);
+      background.strokeRoundedRect(-width / 2, -height / 2, width, height, 8);
+    }
+    const text = addText(scene, 0, 0, label, {
+      fontFamily: FONTS.display,
+      fontSize: `${Math.round(height * (primary ? 0.36 : 0.3))}px`,
+      fontStyle: '900',
+      color: primary ? CSS.black : CSS.accent,
+    })
       .setOrigin(0.5)
       .setLetterSpacing(3);
-    this.add([glow, background, text]);
+    this.add([background, text]);
 
     this.setSize(width, height);
     this.setInteractive({ useHandCursor: true });
@@ -47,18 +72,12 @@ export class Button extends Phaser.GameObjects.Container {
     );
     this.on(Phaser.Input.Events.GAMEOBJECT_POINTER_OUT, () => this.setScale(1));
     this.on(Phaser.Input.Events.GAMEOBJECT_POINTER_UP, () => {
-      // Make sure the game frame owns keyboard focus before typing starts.
-      window.focus();
+      if (opensKeyboard) {
+        // Grab keyboard focus (and open the on-screen keyboard on touch
+        // devices) while still inside the tap, before gameplay starts.
+        touchKeyboard.open();
+      }
       onClick();
-    });
-
-    scene.tweens.add({
-      targets: glow,
-      alpha: 0.45,
-      duration: 900,
-      yoyo: true,
-      repeat: -1,
-      ease: 'Sine.easeInOut',
     });
     scene.add.existing(this);
   }

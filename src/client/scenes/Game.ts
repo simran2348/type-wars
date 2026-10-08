@@ -3,6 +3,7 @@ import { Scene } from 'phaser';
 import { Bullets } from '../entities/Bullets';
 import type { Meteor } from '../entities/Meteor';
 import { Ship } from '../entities/Ship';
+import { touchKeyboard } from '../input/touchKeyboard';
 import { playfieldFor, type Playfield } from '../playfield';
 import { difficultyFor } from '../systems/Difficulty';
 import { Effects } from '../systems/Effects';
@@ -11,7 +12,9 @@ import { ScoreSystem } from '../systems/ScoreSystem';
 import { Sfx } from '../systems/Sfx';
 import { TypingSystem } from '../systems/TypingSystem';
 import { WordPicker } from '../systems/WordPicker';
-import { COLORS } from '../theme';
+import { COLORS, CSS, FONTS } from '../theme';
+import { addText } from '../ui/text';
+import { applyView } from '../view';
 import { Hud } from '../ui/Hud';
 
 const STARTING_LIVES = 3;
@@ -34,6 +37,8 @@ export class Game extends Scene {
   private effects: Effects;
   private sfx: Sfx;
   private hud: Hud;
+  private keyboardHint: Phaser.GameObjects.Text;
+  private unsubscribeTouch: () => void;
 
   constructor() {
     super('Game');
@@ -44,7 +49,8 @@ export class Game extends Scene {
     this.state = 'playing';
     this.lives = STARTING_LIVES;
     this.elapsedSeconds = 0;
-    this.field = playfieldFor(this.scale.width, this.scale.height);
+    const view = applyView(this);
+    this.field = playfieldFor(view.width, view.height);
     this.score = new ScoreSystem();
     this.typing = new TypingSystem<Meteor>();
     this.spawner = new MeteorSpawner(this, new WordPicker());
@@ -57,8 +63,32 @@ export class Game extends Scene {
     this.hud = new Hud(this, STARTING_LIVES, this.sfx.muted, () =>
       this.sfx.toggleMuted()
     );
+    this.keyboardHint = addText(this, 0, 0, 'TAP HERE TO TYPE', {
+      fontFamily: FONTS.display,
+      fontSize: '18px',
+      fontStyle: '900',
+      color: CSS.saber,
+    })
+      .setOrigin(0.5)
+      .setDepth(100)
+      .setVisible(false);
+    this.tweens.add({
+      targets: this.keyboardHint,
+      alpha: 0.35,
+      duration: 700,
+      yoyo: true,
+      repeat: -1,
+    });
     this.layout();
 
+    // Tapping anywhere re-opens the on-screen keyboard if it was dismissed.
+    this.input.on(Phaser.Input.Events.POINTER_UP, () => {
+      if (this.state === 'playing') {
+        touchKeyboard.open();
+      }
+    });
+    touchKeyboard.setActive(true);
+    this.unsubscribeTouch = touchKeyboard.onChar((char) => this.onChar(char));
     this.input.keyboard?.on(
       Phaser.Input.Keyboard.Events.ANY_KEY_DOWN,
       this.onKeyDown,
@@ -70,6 +100,12 @@ export class Game extends Scene {
 
   override update(_time: number, delta: number) {
     if (this.state !== 'playing') {
+      return;
+    }
+    // On touch devices the game waits while the on-screen keyboard is closed.
+    const waitingForKeyboard = touchKeyboard.enabled && !touchKeyboard.isOpen;
+    this.keyboardHint.setVisible(waitingForKeyboard);
+    if (waitingForKeyboard) {
       return;
     }
     const dt = delta / 1000;
@@ -102,7 +138,9 @@ export class Game extends Scene {
       this.state !== 'playing' ||
       event.ctrlKey ||
       event.metaKey ||
-      event.altKey
+      event.altKey ||
+      // Keys typed into the touch keyboard field arrive via onChar instead.
+      touchKeyboard.owns(event.target)
     ) {
       return;
     }
@@ -110,8 +148,15 @@ export class Game extends Scene {
     if (event.key.length === 1 || event.key === 'Backspace') {
       event.preventDefault();
     }
-    const char = event.key.toLowerCase();
-    if (event.repeat || !LETTER.test(char)) {
+    if (!event.repeat) {
+      this.onChar(event.key);
+    }
+  }
+
+  /** Shared by physical keyboards and the on-screen touch keyboard. */
+  private onChar(key: string) {
+    const char = key.toLowerCase();
+    if (this.state !== 'playing' || !LETTER.test(char)) {
       return;
     }
 
@@ -184,6 +229,9 @@ export class Game extends Scene {
 
   private endGame() {
     this.state = 'gameOver';
+    // Drop the on-screen keyboard so the leaderboard is visible.
+    touchKeyboard.setActive(false);
+    this.keyboardHint.setVisible(false);
     this.typing.reset();
     this.bullets.clear();
     this.effects.shipDestroyed(this.ship.x, this.ship.y);
@@ -205,9 +253,14 @@ export class Game extends Scene {
   }
 
   private layout() {
-    this.field = playfieldFor(this.scale.width, this.scale.height);
+    const view = applyView(this);
+    this.field = playfieldFor(view.width, view.height);
     this.ship.setPosition(this.field.shipX, this.field.shipY);
     this.hud.layout(this.field.width, this.field.height);
+    this.keyboardHint.setPosition(
+      this.field.width / 2,
+      this.field.height * 0.4
+    );
 
     // Faint warning band marking where meteors hit the ship.
     this.dangerLine.clear();
@@ -228,6 +281,8 @@ export class Game extends Scene {
   }
 
   private cleanup() {
+    touchKeyboard.setActive(false);
+    this.unsubscribeTouch();
     this.input.keyboard?.off(
       Phaser.Input.Keyboard.Events.ANY_KEY_DOWN,
       this.onKeyDown,
