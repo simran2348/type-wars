@@ -33,7 +33,7 @@ export class Leaderboard extends MenuScene {
 
     const buttonY = PANEL_TOP + LEADERBOARD_PANEL_HEIGHT + 52;
     return [
-      addTitle(this, cx, 42, 'LEADERBOARD', 38),
+      addTitle(this, cx, 42, 'LEADERBOARD', 38, this.designWidth - 48),
       note,
       panel,
       new Button(this, cx - 120, buttonY, 'BACK', () => this.back(), {

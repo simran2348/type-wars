@@ -9,6 +9,9 @@ export type ButtonOptions = {
   variant?: 'primary' | 'secondary';
 };
 
+/** Minimum gap between a button's label and its edges. */
+const LABEL_PADDING = 12;
+
 /** Rounded arcade button with hover and press feedback. */
 export class Button extends Phaser.GameObjects.Container {
   constructor(
@@ -55,6 +58,9 @@ export class Button extends Phaser.GameObjects.Container {
     })
       .setOrigin(0.5)
       .setLetterSpacing(3);
+    // Long labels shrink to keep clear of the edges (the touch font boost
+    // makes them wider).
+    text.setScale(Math.min(1, (width - LABEL_PADDING * 2) / text.width));
     this.add([background, text]);
 
     this.setSize(width, height);

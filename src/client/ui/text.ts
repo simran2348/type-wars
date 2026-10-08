@@ -35,15 +35,19 @@ export const addText = (
     resolution: viewFor(scene.scale).zoom,
   });
 
-/** Logo-style heading: hollow black letters outlined in crawl yellow. */
+/**
+ * Logo-style heading: hollow black letters outlined in crawl yellow. With
+ * `maxWidth`, it shrinks to fit (the touch font boost can make it wider).
+ */
 export const addTitle = (
   scene: Phaser.Scene,
   x: number,
   y: number,
   value: string,
-  size: number
-): Phaser.GameObjects.Text =>
-  addText(scene, x, y, value, {
+  size: number,
+  maxWidth = Infinity
+): Phaser.GameObjects.Text => {
+  const title = addText(scene, x, y, value, {
     fontFamily: FONTS.display,
     fontSize: `${size}px`,
     fontStyle: '900',
@@ -53,3 +57,5 @@ export const addTitle = (
   })
     .setOrigin(0.5)
     .setLetterSpacing(Math.round(size / 12));
+  return title.setScale(Math.min(1, maxWidth / title.width));
+};

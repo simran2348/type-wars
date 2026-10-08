@@ -26,7 +26,7 @@ export class MainMenu extends MenuScene {
         .setAlpha(0.12)
         .setDisplaySize(560, 200)
         .setBlendMode(Phaser.BlendModes.ADD),
-      addTitle(this, cx, 92, 'TYPE WARS', 64),
+      addTitle(this, cx, 92, 'TYPE WARS', 64, this.designWidth - 48),
       addText(this, cx, 158, 'A TYPING SPACE SHOOTER', {
         fontFamily: FONTS.display,
         fontSize: '17px',
