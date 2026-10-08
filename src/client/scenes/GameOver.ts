@@ -12,7 +12,7 @@ import { MenuScene } from '../ui/MenuScene';
 import { addText } from '../ui/text';
 
 const PANEL_TOP = 214;
-/** Ignore Enter briefly so a keystroke from the last word can't skip the screen. */
+/** Ignore keys briefly so a keystroke from the last word can't skip the screen. */
 const ENTER_DELAY_MS = 800;
 
 /** Overlay shown on top of the frozen Game scene. */
@@ -90,11 +90,23 @@ export class GameOver extends MenuScene {
       note,
       new Button(
         this,
-        cx,
+        cx - 140,
+        this.designHeight - 40,
+        'HOME',
+        () => this.home(),
+        {
+          width: 240,
+          height: 56,
+          variant: 'secondary',
+        }
+      ),
+      new Button(
+        this,
+        cx + 140,
         this.designHeight - 40,
         'PLAY AGAIN',
         () => this.playAgain(),
-        { width: 260, height: 56, opensKeyboard: true }
+        { width: 260, height: 56 }
       ),
     ];
   }
@@ -105,11 +117,13 @@ export class GameOver extends MenuScene {
   }
 
   protected override onKey(event: KeyboardEvent) {
-    if (
-      event.key === 'Enter' &&
-      this.time.now - this.shownAt > ENTER_DELAY_MS
-    ) {
+    if (this.time.now - this.shownAt <= ENTER_DELAY_MS) {
+      return;
+    }
+    if (event.key === 'Enter') {
       this.playAgain();
+    } else if (event.key === 'Escape') {
+      this.home();
     }
   }
 
@@ -135,6 +149,12 @@ export class GameOver extends MenuScene {
         panel.showMessage('Leaderboard unavailable');
       }
     }
+  }
+
+  /** Closes the overlay and the frozen game behind it. */
+  private home() {
+    this.scene.stop('Game');
+    this.scene.start('MainMenu');
   }
 
   private playAgain() {

@@ -40,7 +40,7 @@ const SECTIONS: readonly Section[] = [
   },
   {
     heading: 'ON PHONES & TABLETS',
-    body: 'Tap the screen to bring up your keyboard. The game pauses whenever the keyboard is closed.',
+    body: 'A letter keyboard appears below your ship while you play. Tap the letters to shoot; a physical keyboard works too.',
   },
 ];
 
@@ -103,7 +103,6 @@ export class Instructions extends MenuScene {
       new Button(this, cx + 120, buttonY, 'PLAY', () => this.play(), {
         width: 200,
         height: 50,
-        opensKeyboard: true,
       })
     );
     this.designHeight = buttonY + 46;

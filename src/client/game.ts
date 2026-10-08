@@ -46,18 +46,11 @@ document.addEventListener('DOMContentLoaded', () => {
     ],
   });
 
-  const app = document.getElementById('app');
-  const resize = () => {
-    // When a mobile on-screen keyboard opens, shrink to the visible area so
-    // the ship and meteors stay above the keyboard.
-    if (app && window.visualViewport) {
-      app.style.height = `${window.visualViewport.height}px`;
-      window.scrollTo(0, 0);
-    }
+  // Follow the container's size: window resizes, rotation, and the letter
+  // pad appearing or disappearing below the game all change it.
+  new ResizeObserver(() => {
     const next = pixelRatio();
     game.scale.setZoom(1 / next);
     game.scale.resize(parent.clientWidth * next, parent.clientHeight * next);
-  };
-  window.addEventListener('resize', resize);
-  window.visualViewport?.addEventListener('resize', resize);
+  }).observe(parent);
 });

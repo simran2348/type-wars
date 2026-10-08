@@ -35,9 +35,7 @@ export class MainMenu extends MenuScene {
       })
         .setOrigin(0.5)
         .setLetterSpacing(5),
-      new Button(this, cx, 250, 'PLAY', () => this.scene.start('Game'), {
-        opensKeyboard: true,
-      }),
+      new Button(this, cx, 250, 'PLAY', () => this.scene.start('Game')),
       new Button(
         this,
         cx - 130,

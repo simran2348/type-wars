@@ -1,5 +1,6 @@
 import type {
   LeaderboardResponse,
+  ResetScoresResponse,
   SubmitScoreRequest,
   SubmitScoreResponse,
 } from '../shared/api';
@@ -25,3 +26,7 @@ export const submitScore = (score: number): Promise<SubmitScoreResponse> => {
 
 export const fetchLeaderboards = (): Promise<LeaderboardResponse> =>
   request('/api/leaderboard');
+
+/** Admin only; the server rejects anyone else. */
+export const resetAllScores = (): Promise<ResetScoresResponse> =>
+  request('/api/admin/reset-scores', { method: 'POST' });

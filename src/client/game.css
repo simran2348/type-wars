@@ -11,42 +11,72 @@ body {
   background-color: #000000;
 }
 
+/* Column layout: the game takes whatever height the letter pad leaves. */
 #app {
+  display: flex;
+  flex-direction: column;
   width: 100%;
   height: 100vh;
+  height: 100dvh;
   overflow: hidden;
 }
 
 #game-container {
+  flex: 1;
+  min-height: 0;
   width: 100%;
-  height: 100%;
 }
 
 #game-container canvas {
   display: block;
 }
 
-/* Invisible but focusable, so mobile browsers open their keyboard. */
-#touch-keyboard {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  border: 0;
-  opacity: 0;
-  /* 16px stops iOS from zooming the page when the field is focused. */
-  font-size: 16px;
-  caret-color: transparent;
-  pointer-events: none;
+/* Letter pad: compact QWERTY docked below the ship on touch devices. */
+#letter-keyboard {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 4px calc(8px + env(safe-area-inset-bottom));
+  background: #06070b;
+  border-top: 1px solid #2a2e38;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 
-/* During play on touch devices: a tap anywhere above the bottom strip lands on
-   the field, which opens the keyboard natively. The strip keeps the sound
-   toggle reachable. */
-#touch-keyboard.active {
-  width: 100%;
-  height: calc(100% - 48px);
-  pointer-events: auto;
+#letter-keyboard[hidden] {
+  display: none;
+}
+
+.keyboard-row {
+  display: flex;
+  justify-content: center;
+  gap: 5px;
+}
+
+/* Keys share the width of a 10-key row, so shorter rows stay centered with
+   the same key size, like a real keyboard. */
+.key {
+  flex: 0 1 calc((100% - 45px) / 10);
+  max-width: 64px;
+  height: 46px;
+  padding: 0;
+  border: 1px solid #2a2e38;
+  border-radius: 6px;
+  background: #15171e;
+  color: #f2f2f2;
+  font-family: 'Share Tech Mono', ui-monospace, monospace;
+  font-size: 22px;
+  text-transform: uppercase;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.key.pressed {
+  background: #ffe81f;
+  border-color: #ffe81f;
+  color: #000000;
 }

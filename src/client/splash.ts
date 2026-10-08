@@ -1,6 +1,7 @@
 import { requestExpandedMode } from '@devvit/web/client';
 import type { LeaderboardEntry } from '../shared/api';
 import { fetchLeaderboards } from './api';
+import { setupAdmin } from './splashAdmin';
 
 /** The feed card is small, so it shows a shorter list than the full game. */
 const SPLASH_ROWS = 5;
@@ -76,13 +77,19 @@ const renderBoard = (
   }
 };
 
+let adminReady = false;
+
 const loadBoards = async (): Promise<void> => {
   const today = document.getElementById('board-today');
   const allTime = document.getElementById('board-all-time');
   try {
-    const { leaderboards, username } = await fetchLeaderboards();
+    const { leaderboards, username, isAdmin } = await fetchLeaderboards();
     renderBoard(today, leaderboards.today, username);
     renderBoard(allTime, leaderboards.allTime, username);
+    if (isAdmin && !adminReady) {
+      adminReady = true;
+      setupAdmin(() => void loadBoards());
+    }
   } catch (error) {
     console.error(error);
     for (const list of [today, allTime]) {

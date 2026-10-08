@@ -3,7 +3,7 @@ import { Scene } from 'phaser';
 import { Bullets } from '../entities/Bullets';
 import type { Meteor } from '../entities/Meteor';
 import { Ship } from '../entities/Ship';
-import { touchKeyboard } from '../input/touchKeyboard';
+import { letterKeyboard } from '../input/letterKeyboard';
 import { playfieldFor, type Playfield } from '../playfield';
 import { difficultyFor } from '../systems/Difficulty';
 import { Effects } from '../systems/Effects';
@@ -12,8 +12,7 @@ import { ScoreSystem } from '../systems/ScoreSystem';
 import { Sfx } from '../systems/Sfx';
 import { TypingSystem } from '../systems/TypingSystem';
 import { WordPicker } from '../systems/WordPicker';
-import { COLORS, CSS, FONTS } from '../theme';
-import { addText } from '../ui/text';
+import { COLORS } from '../theme';
 import { applyView } from '../view';
 import { Hud } from '../ui/Hud';
 
@@ -37,8 +36,7 @@ export class Game extends Scene {
   private effects: Effects;
   private sfx: Sfx;
   private hud: Hud;
-  private keyboardHint: Phaser.GameObjects.Text;
-  private unsubscribeTouch: () => void;
+  private unsubscribeLetters: () => void;
 
   constructor() {
     super('Game');
@@ -63,32 +61,13 @@ export class Game extends Scene {
     this.hud = new Hud(this, STARTING_LIVES, this.sfx.muted, () =>
       this.sfx.toggleMuted()
     );
-    this.keyboardHint = addText(this, 0, 0, 'TAP HERE TO TYPE', {
-      fontFamily: FONTS.display,
-      fontSize: '22px',
-      fontStyle: '900',
-      color: CSS.saber,
-    })
-      .setOrigin(0.5)
-      .setDepth(100)
-      .setVisible(false);
-    this.tweens.add({
-      targets: this.keyboardHint,
-      alpha: 0.35,
-      duration: 700,
-      yoyo: true,
-      repeat: -1,
-    });
     this.layout();
 
-    // Tapping anywhere re-opens the on-screen keyboard if it was dismissed.
-    this.input.on(Phaser.Input.Events.POINTER_UP, () => {
-      if (this.state === 'playing') {
-        touchKeyboard.open();
-      }
-    });
-    touchKeyboard.setActive(true);
-    this.unsubscribeTouch = touchKeyboard.onChar((char) => this.onChar(char));
+    // On touch devices letters come from the on-screen letter pad.
+    letterKeyboard.show();
+    this.unsubscribeLetters = letterKeyboard.onChar((char) =>
+      this.onChar(char)
+    );
     this.input.keyboard?.on(
       Phaser.Input.Keyboard.Events.ANY_KEY_DOWN,
       this.onKeyDown,
@@ -100,12 +79,6 @@ export class Game extends Scene {
 
   override update(_time: number, delta: number) {
     if (this.state !== 'playing') {
-      return;
-    }
-    // On touch devices the game waits while the on-screen keyboard is closed.
-    const waitingForKeyboard = touchKeyboard.enabled && !touchKeyboard.isOpen;
-    this.keyboardHint.setVisible(waitingForKeyboard);
-    if (waitingForKeyboard) {
       return;
     }
     const dt = delta / 1000;
@@ -138,9 +111,7 @@ export class Game extends Scene {
       this.state !== 'playing' ||
       event.ctrlKey ||
       event.metaKey ||
-      event.altKey ||
-      // Keys typed into the touch keyboard field arrive via onChar instead.
-      touchKeyboard.owns(event.target)
+      event.altKey
     ) {
       return;
     }
@@ -229,9 +200,8 @@ export class Game extends Scene {
 
   private endGame() {
     this.state = 'gameOver';
-    // Drop the on-screen keyboard so the leaderboard is visible.
-    touchKeyboard.setActive(false);
-    this.keyboardHint.setVisible(false);
+    // Hide the letter pad so the Game Over screen gets the full height.
+    letterKeyboard.hide();
     this.typing.reset();
     this.bullets.clear();
     this.effects.shipDestroyed(this.ship.x, this.ship.y);
@@ -257,10 +227,6 @@ export class Game extends Scene {
     this.field = playfieldFor(view.width, view.height);
     this.ship.setPosition(this.field.shipX, this.field.shipY);
     this.hud.layout(this.field.width, this.field.height);
-    this.keyboardHint.setPosition(
-      this.field.width / 2,
-      this.field.height * 0.4
-    );
 
     // Faint warning band marking where meteors hit the ship.
     this.dangerLine.clear();
@@ -281,8 +247,8 @@ export class Game extends Scene {
   }
 
   private cleanup() {
-    touchKeyboard.setActive(false);
-    this.unsubscribeTouch();
+    letterKeyboard.hide();
+    this.unsubscribeLetters();
     this.input.keyboard?.off(
       Phaser.Input.Keyboard.Events.ANY_KEY_DOWN,
       this.onKeyDown,

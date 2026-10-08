@@ -44,7 +44,6 @@ export class Leaderboard extends MenuScene {
       new Button(this, cx + 120, buttonY, 'PLAY', () => this.play(), {
         width: 200,
         height: 50,
-        opensKeyboard: true,
       }),
     ];
   }

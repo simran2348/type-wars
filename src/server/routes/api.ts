@@ -3,9 +3,16 @@ import { reddit } from '@devvit/web/server';
 import type {
   ErrorResponse,
   LeaderboardResponse,
+  ResetScoresResponse,
   SubmitScoreResponse,
 } from '../../shared/api';
-import { getLeaderboards, parseScore, recordScore } from '../core/leaderboard';
+import { isAdmin } from '../core/admin';
+import {
+  getLeaderboards,
+  parseScore,
+  recordScore,
+  resetScores,
+} from '../core/leaderboard';
 
 export const api = new Hono();
 
@@ -18,6 +25,7 @@ api.get('/leaderboard', async (c) => {
     ]);
     return c.json<LeaderboardResponse>({
       username: username ?? null,
+      isAdmin: isAdmin(username),
       leaderboards,
     });
   } catch (error) {
@@ -62,12 +70,35 @@ api.post('/score', async (c) => {
     return c.json<SubmitScoreResponse>({
       recorded,
       username,
+      isAdmin: isAdmin(username),
       leaderboards: await getLeaderboards(),
     });
   } catch (error) {
     console.error('Score submission failed:', error);
     return c.json<ErrorResponse>(
       { status: 'error', message: 'Could not save score' },
+      500
+    );
+  }
+});
+
+/** Admin only: wipes every leaderboard. The caller's identity is re-checked here. */
+api.post('/admin/reset-scores', async (c) => {
+  const username = await reddit.getCurrentUsername();
+  if (!isAdmin(username)) {
+    return c.json<ErrorResponse>(
+      { status: 'error', message: 'Not allowed' },
+      403
+    );
+  }
+  try {
+    await resetScores();
+    console.log(`Leaderboards reset by u/${username}`);
+    return c.json<ResetScoresResponse>({ status: 'ok' });
+  } catch (error) {
+    console.error('Score reset failed:', error);
+    return c.json<ErrorResponse>(
+      { status: 'error', message: 'Could not reset scores' },
       500
     );
   }

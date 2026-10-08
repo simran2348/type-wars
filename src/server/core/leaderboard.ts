@@ -112,6 +112,17 @@ const topEntries = async (key: string): Promise<LeaderboardEntry[]> => {
   return rows.map(({ member, score }) => ({ username: member, score }));
 };
 
+/** Deletes every leaderboard: all-time plus each daily board still alive. */
+export const resetScores = async (): Promise<void> => {
+  const now = Date.now();
+  const days = Math.ceil(DAILY_TTL_SECONDS / (60 * 60 * 24));
+  const boards = [ALL_TIME_KEY];
+  for (let back = -1; back <= days; back++) {
+    boards.push(dailyKey(new Date(now - back * 24 * 60 * 60 * 1000)));
+  }
+  await redis.del(...boards.flatMap((key) => [key, timestampsKey(key)]));
+};
+
 export const getLeaderboards = async (): Promise<Leaderboards> => {
   const [today, allTime] = await Promise.all([
     topEntries(dailyKey(new Date())),

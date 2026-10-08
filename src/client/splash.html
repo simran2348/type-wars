@@ -11,6 +11,22 @@
   </head>
   <body class="app">
     <canvas class="stars" id="stars" aria-hidden="true"></canvas>
+    <button class="admin-toggle" id="admin-toggle" type="button" hidden>
+      Admin
+    </button>
+    <div
+      class="admin-panel"
+      id="admin-panel"
+      role="dialog"
+      aria-label="Admin"
+      hidden
+    >
+      <h2>Admin</h2>
+      <p>Permanently deletes every score on Today's Best and All Time.</p>
+      <button class="admin-reset" id="admin-reset" type="button">
+        Reset all scores
+      </button>
+    </div>
     <div class="content">
       <h1 class="title">TYPE WARS</h1>
       <p class="subtitle">A typing space shooter</p>

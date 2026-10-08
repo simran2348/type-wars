@@ -1,5 +1,4 @@
 import * as Phaser from 'phaser';
-import { touchKeyboard } from '../input/touchKeyboard';
 import { COLORS, CSS, FONTS, TEXTURES } from '../theme';
 import { addText } from './text';
 
@@ -8,8 +7,6 @@ export type ButtonOptions = {
   height?: number;
   /** Primary: solid crawl-yellow. Secondary: yellow outline. */
   variant?: 'primary' | 'secondary';
-  /** Starting gameplay opens the touch keyboard while still inside the tap. */
-  opensKeyboard?: boolean;
 };
 
 /** Rounded arcade button with hover and press feedback. */
@@ -20,12 +17,7 @@ export class Button extends Phaser.GameObjects.Container {
     y: number,
     label: string,
     onClick: () => void,
-    {
-      width = 240,
-      height = 60,
-      variant = 'primary',
-      opensKeyboard = false,
-    }: ButtonOptions = {}
+    { width = 240, height = 60, variant = 'primary' }: ButtonOptions = {}
   ) {
     super(scene, x, y);
     const primary = variant === 'primary';
@@ -72,11 +64,8 @@ export class Button extends Phaser.GameObjects.Container {
     );
     this.on(Phaser.Input.Events.GAMEOBJECT_POINTER_OUT, () => this.setScale(1));
     this.on(Phaser.Input.Events.GAMEOBJECT_POINTER_UP, () => {
-      if (opensKeyboard) {
-        // Grab keyboard focus (and open the on-screen keyboard on touch
-        // devices) while still inside the tap, before gameplay starts.
-        touchKeyboard.open();
-      }
+      // Give the game frame keyboard focus so typing works straight away.
+      window.focus();
       onClick();
     });
     scene.add.existing(this);
