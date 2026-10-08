@@ -1,38 +1,38 @@
-## Type Wars
+# Type Wars
 
-A fast typing space shooter for Reddit, built with Devvit Web and Phaser.
+A fast typing space shooter for Reddit, built with [Devvit Web](https://developers.reddit.com/) and [Phaser](https://phaser.io/).
 
-Meteors fall toward your ship, each carrying a word. Type a word to shoot it down:
-every correct letter fires a bullet, and finishing the word destroys the meteor.
-Let three meteors through and the game ends. Your best score goes onto the
-subreddit's **Today's Best** (UTC day) and **All Time** leaderboards.
+Meteors fall toward your ship, each carrying a word. Every correct letter fires a blaster bolt; finish the word to destroy the meteor. Let three through and it's game over.
 
-- [Devvit](https://developers.reddit.com/): Reddit's developer platform (identity, Redis storage)
-- [Phaser](https://phaser.io/): game rendering, input and effects
-- [Vite](https://vite.dev/): builds the client
-- [Hono](https://hono.dev/): server routes
+- **Scoring:** 1 point per letter, with combo multipliers (×2 at 5 in a row, ×3 at 10, ×4 at 20).
+- **Leaderboards:** Today's Best (UTC) and All Time, top 10 by Reddit username.
+- **Mobile:** an on-screen letter pad appears below the ship on touch devices.
+- **Admin:** the configured admin can reset all scores from the splash screen.
+
+## Development
+
+```bash
+npm install
+npm run login   # once
+npm run dev     # playtest live on Reddit
+```
+
+| Command              | Description             |
+| -------------------- | ----------------------- |
+| `npm run build`      | Build client and server |
+| `npm run test:types` | Type-check              |
+| `npm run lint`       | Lint                    |
+| `npm run deploy`     | Upload a new version    |
+| `npm run launch`     | Publish for review      |
 
 ## Project layout
 
-- `src/client/scenes`: Boot (textures, fonts), Background (starfield), MainMenu, Instructions, Leaderboard, Game, GameOver (overlay)
-- `src/client/view.ts`: device-pixel rendering and the smaller touch-screen scale
-- `src/client/entities`: Ship, Meteor, pooled Bullets
-- `src/client/systems`: typing, meteor spawning, difficulty, scoring/combo, word picking, effects, sound
-- `src/client/input/touchKeyboard.ts`: on-screen keyboard support for phones and tablets
-- `src/client/data/words.ts`: curated word bank (easy / medium / hard / expert)
-- `src/server/core/leaderboard.ts`: score validation and Redis-backed leaderboards
+- `src/client`: Phaser game (`scenes/`, `entities/`, `systems/`, `ui/`) and the feed splash page
+- `src/server`: Hono API: score submission, leaderboards (Redis), admin reset
 - `src/shared/api.ts`: types shared by client and server
 
-## Commands
-
-- `npm run dev`: Starts a development server where you can develop your application live on Reddit.
-- `npm run build`: Builds your client and server projects
-- `npm run deploy`: Uploads a new version of your app
-- `npm run launch`: Publishes your app for review
-- `npm run login`: Logs your CLI into Reddit
-- `npm run test:types`: Type checks the client, server and shared code
-- `npm run lint`: Lints the source
+Admins are listed in `src/server/core/admin.ts`; words live in `src/client/data/words.ts`.
 
 ## Credits
 
-Bootstrapped from the Devvit Phaser template, based on the Phaser team's [Vite TypeScript template](https://github.com/phaserjs/template-vite-ts).
+Bootstrapped from the Devvit Phaser template, based on Phaser's [Vite TypeScript template](https://github.com/phaserjs/template-vite-ts).
