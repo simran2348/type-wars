@@ -1,7 +1,7 @@
 export const LEADERBOARD_SIZE = 10;
 
 /** Upper bound for a single run; anything above is rejected as implausible. */
-export const MAX_SCORE = 2_000_000;
+export const MAX_SCORE = 200_000;
 
 export type LeaderboardEntry = {
   username: string;

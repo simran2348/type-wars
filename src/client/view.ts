@@ -8,8 +8,8 @@ import type * as Phaser from 'phaser';
  */
 
 const MAX_PIXEL_RATIO = 3;
-const MIN_TOUCH_SCALE = 0.72;
-const MAX_TOUCH_SCALE = 0.9;
+const MIN_TOUCH_SCALE = 0.8;
+const MAX_TOUCH_SCALE = 0.95;
 /** Touch screens narrower than this (CSS px) get scaled down proportionally. */
 const TOUCH_REFERENCE_WIDTH = 900;
 

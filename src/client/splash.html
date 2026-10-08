@@ -10,12 +10,25 @@
     <title>Type Wars</title>
   </head>
   <body class="app">
-    <div class="stars"></div>
+    <canvas class="stars" id="stars" aria-hidden="true"></canvas>
     <div class="content">
       <h1 class="title">TYPE WARS</h1>
       <p class="subtitle">A typing space shooter</p>
       <button class="play-button" id="play-button">PLAY</button>
-      <p class="hint">Type the words on the meteors to destroy them.</p>
+      <section class="boards" aria-label="Leaderboards">
+        <div class="board">
+          <h2>Today's Best</h2>
+          <ol id="board-today">
+            <li class="empty">Loading…</li>
+          </ol>
+        </div>
+        <div class="board">
+          <h2>All Time</h2>
+          <ol id="board-all-time">
+            <li class="empty">Loading…</li>
+          </ol>
+        </div>
+      </section>
     </div>
     <script type="module" src="splash.ts"></script>
   </body>

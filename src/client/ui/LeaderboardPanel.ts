@@ -7,11 +7,11 @@ import {
 import { COLORS, CSS, FONTS } from '../theme';
 import { addText } from './text';
 
-const COLUMN_WIDTH = 260;
+const COLUMN_WIDTH = 290;
 const COLUMN_GAP = 24;
 const PADDING = 14;
-const HEADER_HEIGHT = 40;
-const ROW_HEIGHT = 25;
+const HEADER_HEIGHT = 44;
+const ROW_HEIGHT = 29;
 const MAX_NAME_LENGTH = 16;
 
 const FRAME_WIDTH = COLUMN_WIDTH + PADDING * 2;
@@ -95,7 +95,7 @@ export class LeaderboardPanel extends Phaser.GameObjects.Container {
   private header(x: number, label: string): Phaser.GameObjects.Text {
     return addText(this.scene, x, HEADER_HEIGHT / 2, label, {
       fontFamily: FONTS.display,
-      fontSize: '13px',
+      fontSize: '15px',
       fontStyle: '900',
       color: CSS.accent,
     })
@@ -109,7 +109,7 @@ export class LeaderboardPanel extends Phaser.GameObjects.Container {
       x + COLUMN_WIDTH / 2,
       LEADERBOARD_PANEL_HEIGHT / 2,
       value,
-      { fontFamily: FONTS.body, fontSize: '16px', color: CSS.muted }
+      { fontFamily: FONTS.body, fontSize: '19px', color: CSS.muted }
     ).setOrigin(0.5);
   }
 
@@ -125,7 +125,7 @@ export class LeaderboardPanel extends Phaser.GameObjects.Container {
       const y = HEADER_HEIGHT + ROW_HEIGHT / 2 + i * ROW_HEIGHT;
       const style = {
         fontFamily: FONTS.mono,
-        fontSize: '16px',
+        fontSize: '19px',
         color: entry.username === player ? CSS.accent : CSS.text,
       };
       return [

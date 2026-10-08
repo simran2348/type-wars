@@ -89,7 +89,7 @@ export class Effects {
   scorePopup(x: number, y: number, text: string): void {
     const popup = addText(this.scene, x, y, text, {
       fontFamily: FONTS.display,
-      fontSize: '16px',
+      fontSize: '20px',
       fontStyle: '900',
       color: CSS.accent,
       stroke: CSS.black,

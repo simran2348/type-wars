@@ -6,15 +6,34 @@ import {
   type Leaderboards,
 } from '../../shared/api';
 
-const ALL_TIME_KEY = 'leaderboard:all-time';
+/**
+ * Every key is namespaced to this app: generic names like `leaderboard:*`
+ * already existed with another data type in the playtest subreddit's Redis and
+ * made every sorted-set call fail with WRONGTYPE.
+ */
+const KEY_PREFIX = 'type-wars:scores';
+const ALL_TIME_KEY = `${KEY_PREFIX}:all-time`;
 const DAILY_TTL_SECONDS = 60 * 60 * 24 * 3;
 
 /** Daily boundaries are UTC, derived from server time only. */
 const dailyKey = (now: Date): string =>
-  `leaderboard:daily:${now.toISOString().slice(0, 10)}`;
+  `${KEY_PREFIX}:daily:${now.toISOString().slice(0, 10)}`;
 
 /** Per-board hash of username -> ISO timestamp of their best score. */
-const timestampsKey = (boardKey: string): string => `${boardKey}:at`;
+const timestampsKey = (boardKey: string): string => `${boardKey}:recorded-at`;
+
+/**
+ * True when the key is a sorted set or doesn't exist yet. Anything else is
+ * logged and skipped, so one bad key can't take down every leaderboard.
+ */
+const isBoard = async (key: string): Promise<boolean> => {
+  const type = await redis.type(key);
+  if (type === 'zset' || type === 'none') {
+    return true;
+  }
+  console.error(`Leaderboard key "${key}" holds a ${type}, expected a zset`);
+  return false;
+};
 
 export const parseScore = (body: unknown): number | null => {
   if (typeof body !== 'object' || body === null || !('score' in body)) {
@@ -25,9 +44,7 @@ export const parseScore = (body: unknown): number | null => {
     typeof score !== 'number' ||
     !Number.isSafeInteger(score) ||
     score < 0 ||
-    score > MAX_SCORE ||
-    // Every point source in the game is a multiple of 10.
-    score % 10 !== 0
+    score > MAX_SCORE
   ) {
     return null;
   }
@@ -44,6 +61,9 @@ const recordOnBoard = async (
   score: number,
   now: Date
 ): Promise<void> => {
+  if (!(await isBoard(key))) {
+    return;
+  }
   const previous = await redis.zScore(key, username);
   if (previous !== undefined && previous >= score) {
     return;
@@ -82,6 +102,9 @@ export const recordScore = async (
 };
 
 const topEntries = async (key: string): Promise<LeaderboardEntry[]> => {
+  if (!(await isBoard(key))) {
+    return [];
+  }
   const rows = await redis.zRange(key, 0, LEADERBOARD_SIZE - 1, {
     by: 'rank',
     reverse: true,

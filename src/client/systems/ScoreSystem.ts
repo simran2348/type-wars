@@ -2,8 +2,9 @@
 export const multiplierFor = (combo: number): number =>
   combo >= 20 ? 4 : combo >= 10 ? 3 : combo >= 5 ? 2 : 1;
 
+/** One point per letter (a 3-letter word scores 3), times the combo multiplier. */
 export const pointsFor = (word: string, combo: number): number =>
-  word.length * 10 * multiplierFor(combo);
+  word.length * multiplierFor(combo);
 
 export type RunSummary = {
   score: number;

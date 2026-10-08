@@ -1,12 +1,24 @@
 import * as Phaser from 'phaser';
-import { Meteor } from '../entities/Meteor';
+import { Meteor, type MeteorPath } from '../entities/Meteor';
 import type { Playfield } from '../playfield';
 import { travelSecondsFor, type Difficulty } from './Difficulty';
 import type { WordPicker } from './WordPicker';
 
 /** Delay before the first meteor and when the screen is empty. */
 const QUICK_SPAWN_MS = 600;
-const SPAWN_ATTEMPTS = 6;
+const SPAWN_ATTEMPTS = 8;
+/** New meteors keep at least this much horizontal distance from recent ones. */
+const MIN_SPAWN_GAP = 0.18;
+
+/** A fresh, independent route for every meteor so no two paths repeat. */
+const randomPath = (startX: number): MeteorPath => ({
+  startX,
+  bendX: Phaser.Math.FloatBetween(0.05, 0.95),
+  endX: Phaser.Math.FloatBetween(0.12, 0.88),
+  swayAmplitude: Phaser.Math.FloatBetween(0, 40),
+  swayCycles: Phaser.Math.FloatBetween(0.5, 3),
+  swayPhase: Phaser.Math.FloatBetween(0, Math.PI * 2),
+});
 
 /**
  * Owns the live meteors and the words on screen, and decides when, where and
@@ -56,9 +68,7 @@ export class MeteorSpawner {
         this.scene,
         {
           word,
-          startX,
-          // Drift partway toward the ship so meteors converge on the player.
-          endX: Phaser.Math.Linear(startX, 0.5, 0.45),
+          path: randomPath(startX),
           travelSeconds: travelSecondsFor(word, difficulty),
           fontSize: field.wordFontSize,
         },
@@ -67,16 +77,23 @@ export class MeteorSpawner {
     );
   }
 
-  /** Picks a lane far from meteors still near the top, so labels don't overlap. */
+  /**
+   * Picks a random spawn point clear of meteors still near the top, so labels
+   * don't overlap. Takes the first clear spot rather than the widest gap, which
+   * would keep reusing the same few lanes.
+   */
   private pickStartX(field: Playfield): number {
     const recent = this.meteors
       .filter((m) => m.travel < 0.35)
       .map((m) => m.x / field.width);
-    let best = 0.5;
+    let best = Phaser.Math.FloatBetween(0.1, 0.9);
     let bestGap = -1;
     for (let i = 0; i < SPAWN_ATTEMPTS; i++) {
-      const candidate = Phaser.Math.FloatBetween(0.12, 0.88);
+      const candidate = Phaser.Math.FloatBetween(0.1, 0.9);
       const gap = Math.min(1, ...recent.map((x) => Math.abs(x - candidate)));
+      if (gap >= MIN_SPAWN_GAP) {
+        return candidate;
+      }
       if (gap > bestGap) {
         best = candidate;
         bestGap = gap;

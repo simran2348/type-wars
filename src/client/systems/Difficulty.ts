@@ -23,7 +23,7 @@ export const difficultyFor = ({
   score,
 }: RunProgress): Difficulty => {
   // Grows steadily: 0 at the start, roughly 10 after ~2 minutes of good play.
-  const intensity = elapsedSeconds / 25 + destroyed / 12 + score / 5000;
+  const intensity = elapsedSeconds / 25 + destroyed / 12 + score / 500;
 
   return {
     spawnIntervalMs: Math.max(800, 2600 - 200 * intensity),

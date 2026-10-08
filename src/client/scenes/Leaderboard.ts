@@ -26,7 +26,7 @@ export class Leaderboard extends MenuScene {
     const panel = new LeaderboardPanel(this, 20, PANEL_TOP);
     const note = addText(this, cx, 84, 'Top 10 Reddit pilots', {
       fontFamily: FONTS.body,
-      fontSize: '17px',
+      fontSize: '20px',
       color: CSS.muted,
     }).setOrigin(0.5);
     void this.loadBoards(panel, note);

@@ -6,12 +6,26 @@ import { addText } from '../ui/text';
 
 export type MeteorState = 'active' | 'destroyed' | 'missed';
 
+/**
+ * A meteor's horizontal route, as fractions of the playfield width so it
+ * survives resizes. Height always grows linearly with time, keeping the time
+ * to impact fair; only the sideways path varies.
+ */
+export type MeteorPath = {
+  startX: number;
+  /** Quadratic curve control point: pulls the path sideways mid-flight. */
+  bendX: number;
+  endX: number;
+  /** Side-to-side sway in logical px, fading out near the bottom. */
+  swayAmplitude: number;
+  /** Number of full sways over the whole trip. */
+  swayCycles: number;
+  swayPhase: number;
+};
+
 export type MeteorConfig = {
   word: string;
-  /** Horizontal spawn position as a fraction of the playfield width. */
-  startX: number;
-  /** Horizontal position at the danger line, as a fraction of the width. */
-  endX: number;
+  path: MeteorPath;
   travelSeconds: number;
   fontSize: number;
 };
@@ -39,12 +53,11 @@ export class Meteor
   private readonly restText: Phaser.GameObjects.Text;
   private readonly charWidth: number;
   private readonly spin = Phaser.Math.FloatBetween(-0.8, 0.8);
-  private readonly wobblePhase = Phaser.Math.FloatBetween(0, Math.PI * 2);
   private targeted = false;
   private incomingBullets = 0;
 
   constructor(scene: Phaser.Scene, config: MeteorConfig, field: Playfield) {
-    super(scene, config.startX * field.width, 0);
+    super(scene, config.path.startX * field.width, 0);
     this.config = config;
     this.word = config.word;
     this.radius = 24 + Math.min(this.word.length, 14) * 1.5;
@@ -125,10 +138,14 @@ export class Meteor
     this.travel = Math.min(1, this.travel + dt / this.config.travelSeconds);
     const t = this.travel;
     const margin = this.radius + 8;
-    const baseX =
-      Phaser.Math.Linear(this.config.startX, this.config.endX, t) * field.width;
-    const wobble = Math.sin(this.wobblePhase + t * Math.PI * 3) * 18 * (1 - t);
-    this.x = Phaser.Math.Clamp(baseX + wobble, margin, field.width - margin);
+    const { startX, bendX, endX, swayAmplitude, swayCycles, swayPhase } =
+      this.config.path;
+    const u = 1 - t;
+    const curveX =
+      (u * u * startX + 2 * u * t * bendX + t * t * endX) * field.width;
+    const sway =
+      Math.sin(swayPhase + t * swayCycles * Math.PI * 2) * swayAmplitude * u;
+    this.x = Phaser.Math.Clamp(curveX + sway, margin, field.width - margin);
     this.y = Phaser.Math.Linear(-this.radius, field.dangerY, t);
   }
 

@@ -9,7 +9,7 @@ import { addText, addTitle } from '../ui/text';
 
 export class MainMenu extends MenuScene {
   protected readonly designWidth = 560;
-  protected readonly designHeight = 450;
+  protected readonly designHeight = 470;
   private ship: Ship;
 
   constructor() {
@@ -29,7 +29,7 @@ export class MainMenu extends MenuScene {
       addTitle(this, cx, 92, 'TYPE WARS', 64),
       addText(this, cx, 158, 'A TYPING SPACE SHOOTER', {
         fontFamily: FONTS.display,
-        fontSize: '14px',
+        fontSize: '17px',
         fontStyle: '700',
         color: CSS.saber,
       })
@@ -40,23 +40,23 @@ export class MainMenu extends MenuScene {
       }),
       new Button(
         this,
-        cx - 128,
+        cx - 130,
         334,
         'HOW TO PLAY',
         () => this.scene.start('Instructions'),
-        { width: 236, height: 48, variant: 'secondary' }
+        { width: 240, height: 56, variant: 'secondary' }
       ),
       new Button(
         this,
-        cx + 128,
+        cx + 130,
         334,
         'LEADERBOARD',
         () => this.scene.start('Leaderboard'),
-        { width: 236, height: 48, variant: 'secondary' }
+        { width: 240, height: 56, variant: 'secondary' }
       ),
-      addText(this, cx, 410, 'Type the words on the meteors to destroy them.', {
+      addText(this, cx, 425, 'Type the words on the meteors to destroy them.', {
         fontFamily: FONTS.body,
-        fontSize: '18px',
+        fontSize: '21px',
         color: CSS.muted,
       }).setOrigin(0.5),
     ];

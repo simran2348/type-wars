@@ -28,7 +28,7 @@ const SECTIONS: readonly Section[] = [
   },
   {
     heading: 'SCORING & COMBOS',
-    body: 'Each meteor is worth 10 points per letter, so long words pay more. Destroy meteors in a row to build a combo: 5 in a row doubles your points, 10 triples them and 20 quadruples them.',
+    body: 'Each meteor is worth 1 point per letter, so a 3-letter word scores 3 and long words pay more. Destroy meteors in a row to build a combo: 5 in a row doubles your points, 10 triples them and 20 quadruples them.',
   },
   {
     heading: 'DIFFICULTY',
@@ -63,7 +63,7 @@ export class Instructions extends MenuScene {
 
     const intro = addText(this, cx, 78, INTRO, {
       fontFamily: FONTS.body,
-      fontSize: '18px',
+      fontSize: '21px',
       color: CSS.text,
       align: 'center',
       wordWrap: { width: BODY_WIDTH },
@@ -74,17 +74,17 @@ export class Instructions extends MenuScene {
 
     for (const { heading, body } of SECTIONS) {
       const marker = this.add
-        .rectangle(PADDING_X, y + 8, 4, 14, COLORS.accent)
+        .rectangle(PADDING_X, y + 10, 4, 17, COLORS.accent)
         .setOrigin(0, 0.5);
       const headingText = addText(this, PADDING_X + 14, y, heading, {
         fontFamily: FONTS.display,
-        fontSize: '14px',
+        fontSize: '17px',
         fontStyle: '900',
         color: CSS.accent,
       }).setLetterSpacing(2);
-      const bodyText = addText(this, PADDING_X + 14, y + 22, body, {
+      const bodyText = addText(this, PADDING_X + 14, y + 26, body, {
         fontFamily: FONTS.body,
-        fontSize: '16px',
+        fontSize: '19px',
         color: CSS.muted,
         wordWrap: { width: BODY_WIDTH - 14 },
         lineSpacing: 1,

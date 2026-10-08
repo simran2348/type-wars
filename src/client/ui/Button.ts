@@ -57,7 +57,7 @@ export class Button extends Phaser.GameObjects.Container {
     }
     const text = addText(scene, 0, 0, label, {
       fontFamily: FONTS.display,
-      fontSize: `${Math.round(height * (primary ? 0.36 : 0.3))}px`,
+      fontSize: `${Math.round(height * (primary ? 0.38 : 0.34))}px`,
       fontStyle: '900',
       color: primary ? CSS.black : CSS.accent,
     })

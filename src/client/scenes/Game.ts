@@ -65,7 +65,7 @@ export class Game extends Scene {
     );
     this.keyboardHint = addText(this, 0, 0, 'TAP HERE TO TYPE', {
       fontFamily: FONTS.display,
-      fontSize: '18px',
+      fontSize: '22px',
       fontStyle: '900',
       color: CSS.saber,
     })

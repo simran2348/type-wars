@@ -1,5 +1,6 @@
 @import '@fontsource/orbitron/latin-900.css';
 @import '@fontsource/news-cycle/latin-400.css';
+@import '@fontsource/share-tech-mono/latin-400.css';
 
 * {
   box-sizing: border-box;
@@ -37,16 +38,8 @@ body {
 .stars {
   position: absolute;
   inset: 0;
-  background-image:
-    radial-gradient(1px 1px at 12% 18%, #fff, transparent),
-    radial-gradient(1px 1px at 72% 12%, #dce6ff, transparent),
-    radial-gradient(1.5px 1.5px at 38% 64%, #fff, transparent),
-    radial-gradient(1px 1px at 88% 44%, #fff, transparent),
-    radial-gradient(1px 1px at 22% 82%, #dce6ff, transparent),
-    radial-gradient(1.5px 1.5px at 58% 88%, #fff, transparent),
-    radial-gradient(1px 1px at 6% 52%, #fff, transparent),
-    radial-gradient(1px 1px at 94% 74%, #fff, transparent);
-  opacity: 0.8;
+  width: 100%;
+  height: 100%;
 }
 
 .content {
@@ -54,7 +47,8 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
+  width: 100%;
   padding: 0 16px;
   text-align: center;
 }
@@ -62,7 +56,7 @@ body {
 /* Hollow yellow-outlined letters, like a classic space-saga logo. */
 .title {
   font-family: 'Orbitron', sans-serif;
-  font-size: clamp(2.2rem, 9vw, 3.8rem);
+  font-size: clamp(2rem, 8vw, 3.4rem);
   font-weight: 900;
   letter-spacing: 0.1em;
   color: #000000;
@@ -80,8 +74,8 @@ body {
 }
 
 .play-button {
-  margin-top: 12px;
-  padding: 14px 56px;
+  margin-top: 6px;
+  padding: 12px 56px;
   border: none;
   border-radius: 8px;
   background: #ffe81f;
@@ -99,7 +93,65 @@ body {
   transform: scale(1.05);
 }
 
-.hint {
+.boards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  width: min(560px, 100%);
+  margin-top: 10px;
+}
+
+.board {
+  min-width: 0;
+  padding: 8px 12px 10px;
+  border: 1px solid #2a2e38;
+  border-radius: 6px;
+  background: rgba(6, 7, 11, 0.85);
+  text-align: left;
+}
+
+.board h2 {
+  margin-bottom: 6px;
+  color: #ffe81f;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.board ol {
+  list-style: none;
+}
+
+.board li {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-family: 'Share Tech Mono', ui-monospace, monospace;
+  font-size: 0.95rem;
+  line-height: 1.45;
+}
+
+.board .name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.board .me {
+  color: #ffe81f;
+}
+
+.board .empty {
+  justify-content: center;
   color: #9aa0aa;
-  font-size: 1rem;
+  font-family: 'News Cycle', sans-serif;
+}
+
+/* Short feed cards: drop the boards rather than squash everything. */
+@media (max-height: 340px) {
+  .boards {
+    display: none;
+  }
 }

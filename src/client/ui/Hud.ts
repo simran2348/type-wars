@@ -4,7 +4,7 @@ import { CSS, FONTS, TEXTURES } from '../theme';
 import { addText } from './text';
 
 const MARGIN = 16;
-const LIFE_SPACING = 30;
+const LIFE_SPACING = 36;
 
 export type HudState = {
   score: number;
@@ -32,19 +32,19 @@ export class Hud {
     this.lives = maxLives;
     const scoreLabel = addText(scene, MARGIN, MARGIN, 'SCORE', {
       fontFamily: FONTS.display,
-      fontSize: '11px',
+      fontSize: '13px',
       fontStyle: '700',
       color: CSS.accent,
     }).setLetterSpacing(3);
     // Orbitron's slashed zero reads like an icon, so numbers use the mono face.
-    this.scoreText = addText(scene, MARGIN, MARGIN + 12, '0', {
+    this.scoreText = addText(scene, MARGIN, MARGIN + 14, '0', {
       fontFamily: FONTS.mono,
-      fontSize: '28px',
+      fontSize: '34px',
       color: CSS.text,
     });
-    this.comboText = addText(scene, MARGIN, MARGIN + 46, '', {
+    this.comboText = addText(scene, MARGIN, MARGIN + 56, '', {
       fontFamily: FONTS.display,
-      fontSize: '13px',
+      fontSize: '16px',
       fontStyle: '700',
       color: CSS.accent,
     })
@@ -52,12 +52,12 @@ export class Hud {
       .setVisible(false);
     this.lifeIcons = Array.from({ length: maxLives }, () =>
       scene.add
-        .image(0, MARGIN + 14, TEXTURES.ship)
-        .setScale(0.4 * TEXTURE_SCALE)
+        .image(0, MARGIN + 16, TEXTURES.ship)
+        .setScale(0.48 * TEXTURE_SCALE)
     );
     this.soundText = addText(scene, 0, 0, '', {
       fontFamily: FONTS.display,
-      fontSize: '10px',
+      fontSize: '12px',
       fontStyle: '700',
       color: CSS.muted,
     })
@@ -81,7 +81,7 @@ export class Hud {
   layout(width: number, height: number): void {
     this.lifeIcons.forEach((icon, i) =>
       icon.setX(
-        width - MARGIN - 13 - (this.lifeIcons.length - 1 - i) * LIFE_SPACING
+        width - MARGIN - 16 - (this.lifeIcons.length - 1 - i) * LIFE_SPACING
       )
     );
     this.soundText.setPosition(width - MARGIN, height - MARGIN);

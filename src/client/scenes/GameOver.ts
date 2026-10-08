@@ -53,7 +53,7 @@ export class GameOver extends MenuScene {
       cx,
       PANEL_TOP + LEADERBOARD_PANEL_HEIGHT + 16,
       '',
-      { fontFamily: FONTS.body, fontSize: '15px', color: CSS.muted }
+      { fontFamily: FONTS.body, fontSize: '18px', color: CSS.muted }
     ).setOrigin(0.5);
     void this.submit(panel, note);
 
@@ -68,7 +68,7 @@ export class GameOver extends MenuScene {
         .setLetterSpacing(5),
       addText(this, cx, 90, 'FINAL SCORE', {
         fontFamily: FONTS.display,
-        fontSize: '12px',
+        fontSize: '14px',
         fontStyle: '700',
         color: CSS.muted,
       })
@@ -84,7 +84,7 @@ export class GameOver extends MenuScene {
         cx,
         172,
         `${destroyed} meteors  ·  ${accuracy}% accuracy  ·  best combo ${bestCombo}`,
-        { fontFamily: FONTS.body, fontSize: '17px', color: CSS.muted }
+        { fontFamily: FONTS.body, fontSize: '20px', color: CSS.muted }
       ).setOrigin(0.5),
       panel,
       note,
