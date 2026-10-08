@@ -79,6 +79,30 @@ export class Sfx {
     });
   }
 
+  /** Golden word completed: quick rising chime. */
+  bonus(): void {
+    [660, 880, 1320].forEach((from, i) =>
+      this.tone({
+        from,
+        duration: 0.12,
+        type: 'triangle',
+        volume: 0.06,
+        delay: i * 0.07,
+      })
+    );
+  }
+
+  /** Danger meteor got through: short falling buzz. */
+  penalty(): void {
+    this.tone({
+      from: 420,
+      to: 180,
+      duration: 0.22,
+      type: 'square',
+      volume: 0.04,
+    });
+  }
+
   gameOver(): void {
     [440, 330, 220].forEach((from, i) =>
       this.tone({

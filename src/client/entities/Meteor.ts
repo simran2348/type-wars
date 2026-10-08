@@ -3,28 +3,45 @@ import type { Playfield } from '../playfield';
 import type { TypingTarget } from '../systems/TypingSystem';
 import { COLORS, CSS, FONTS, TEXTURES } from '../theme';
 import { addText } from '../ui/text';
+import { laneX, swayOffset, type MeteorPath } from './meteorPath';
 
 export type MeteorState = 'active' | 'destroyed' | 'missed';
 
-/**
- * A meteor's horizontal route, as fractions of the playfield width so it
- * survives resizes. Height always grows linearly with time, keeping the time
- * to impact fair; only the sideways path varies.
- */
-export type MeteorPath = {
-  startX: number;
-  /** Quadratic curve control point: pulls the path sideways mid-flight. */
-  bendX: number;
-  endX: number;
-  /** Side-to-side sway in logical px, fading out near the bottom. */
-  swayAmplitude: number;
-  /** Number of full sways over the whole trip. */
-  swayCycles: number;
-  swayPhase: number;
+/** Normal meteors cost a life; danger ones cost points; golden ones pay a flat bonus. */
+export type MeteorKind = 'normal' | 'danger' | 'golden';
+
+type KindStyle = {
+  /** Multiply tint for the rock, or null to keep its natural colour. */
+  rockTint: number | null;
+  wordColor: string;
+  border: number;
+  glow: number | null;
+};
+
+const KIND_STYLES: Record<MeteorKind, KindStyle> = {
+  normal: {
+    rockTint: null,
+    wordColor: CSS.text,
+    border: COLORS.panelBorder,
+    glow: null,
+  },
+  danger: {
+    rockTint: 0xff7070,
+    wordColor: CSS.danger,
+    border: COLORS.danger,
+    glow: COLORS.danger,
+  },
+  golden: {
+    rockTint: 0xffb84d,
+    wordColor: CSS.gold,
+    border: COLORS.gold,
+    glow: COLORS.gold,
+  },
 };
 
 export type MeteorConfig = {
   word: string;
+  kind: MeteorKind;
   path: MeteorPath;
   travelSeconds: number;
   fontSize: number;
@@ -38,6 +55,7 @@ export class Meteor
   implements TypingTarget
 {
   readonly word: string;
+  readonly kind: MeteorKind;
   readonly radius: number;
   typed = 0;
   status: MeteorState = 'active';
@@ -45,6 +63,7 @@ export class Meteor
   travel = 0;
 
   private readonly config: MeteorConfig;
+  private readonly style: KindStyle;
   private readonly rock: Phaser.GameObjects.Image;
   private readonly reticle: Phaser.GameObjects.Graphics;
   private readonly label: Phaser.GameObjects.Container;
@@ -57,18 +76,22 @@ export class Meteor
   private incomingBullets = 0;
 
   constructor(scene: Phaser.Scene, config: MeteorConfig, field: Playfield) {
-    super(scene, config.path.startX * field.width, 0);
+    super(scene, 0, 0);
     this.config = config;
     this.word = config.word;
+    this.kind = config.kind;
+    this.style = KIND_STYLES[config.kind];
     this.radius = 24 + Math.min(this.word.length, 14) * 1.5;
-    this.y = -this.radius;
+    this.place(field, 0);
 
     this.rock = scene.add
       .image(0, 0, Phaser.Utils.Array.GetRandom([...TEXTURES.meteors]))
       .setDisplaySize(this.radius * 2.3, this.radius * 2.3)
       .setRotation(Phaser.Math.FloatBetween(0, Math.PI * 2));
+    this.applyBaseTint();
     this.reticle = scene.add.graphics().setVisible(false);
     this.drawReticle();
+    const glow = this.createGlow(scene);
 
     const style: Phaser.Types.GameObjects.Text.TextStyle = {
       fontFamily: FONTS.mono,
@@ -80,7 +103,7 @@ export class Meteor
     }).setOrigin(0, 0.5);
     this.restText = addText(scene, 0, 0, this.word, {
       ...style,
-      color: CSS.text,
+      color: this.style.wordColor,
     }).setOrigin(0, 0.5);
     this.charWidth = this.restText.width / this.word.length;
     this.pill = scene.add.graphics();
@@ -90,7 +113,7 @@ export class Meteor
       this.restText,
     ]);
 
-    this.add([this.reticle, this.rock, this.label]);
+    this.add([...(glow ? [glow] : []), this.reticle, this.rock, this.label]);
     this.refreshLabel();
     scene.add.existing(this);
   }
@@ -136,16 +159,16 @@ export class Meteor
       return;
     }
     this.travel = Math.min(1, this.travel + dt / this.config.travelSeconds);
-    const t = this.travel;
+    this.place(field, this.travel);
+  }
+
+  /** Positions the meteor at trip progress t within the current playfield. */
+  private place(field: Playfield, t: number): void {
+    const { path } = this.config;
     const margin = this.radius + 8;
-    const { startX, bendX, endX, swayAmplitude, swayCycles, swayPhase } =
-      this.config.path;
-    const u = 1 - t;
-    const curveX =
-      (u * u * startX + 2 * u * t * bendX + t * t * endX) * field.width;
-    const sway =
-      Math.sin(swayPhase + t * swayCycles * Math.PI * 2) * swayAmplitude * u;
-    this.x = Phaser.Math.Clamp(curveX + sway, margin, field.width - margin);
+    const laneWidth = Math.max(0, field.width - margin * 2);
+    const x = margin + laneX(path, t) * laneWidth + swayOffset(path, t);
+    this.x = Phaser.Math.Clamp(x, margin, field.width - margin);
     this.y = Phaser.Math.Linear(-this.radius, field.dangerY, t);
   }
 
@@ -163,7 +186,7 @@ export class Meteor
     this.rock.setTintMode(Phaser.TintModes.FILL).setTint(0xffffff);
     this.scene.time.delayedCall(50, () => {
       if (this.active) {
-        this.rock.clearTint();
+        this.applyBaseTint();
       }
     });
     this.rock.setDisplaySize(this.radius * 2.45, this.radius * 2.45);
@@ -204,7 +227,7 @@ export class Meteor
       onComplete: () => {
         if (this.active) {
           this.label.x = 0;
-          this.rock.clearTint();
+          this.applyBaseTint();
           this.refreshLabel();
         }
       },
@@ -222,12 +245,43 @@ export class Meteor
     const width = fullWidth + LABEL_PADDING_X * 2;
     const height = this.restText.height + LABEL_PADDING_Y * 2;
     const border =
-      borderColor ?? (this.targeted ? COLORS.accent : COLORS.panelBorder);
+      borderColor ?? (this.targeted ? COLORS.accent : this.style.border);
     this.pill.clear();
     this.pill.fillStyle(COLORS.panel, 0.85);
     this.pill.fillRoundedRect(-width / 2, -height / 2, width, height, 8);
     this.pill.lineStyle(this.targeted ? 2 : 1.5, border, 1);
     this.pill.strokeRoundedRect(-width / 2, -height / 2, width, height, 8);
+  }
+
+  /** Resets the rock to its kind's colour (also clears hit flashes). */
+  private applyBaseTint(): void {
+    this.rock.clearTint();
+    if (this.style.rockTint !== null) {
+      this.rock.setTint(this.style.rockTint);
+    }
+  }
+
+  /** Pulsing halo that marks danger and golden meteors at a glance. */
+  private createGlow(scene: Phaser.Scene): Phaser.GameObjects.Image | null {
+    if (this.style.glow === null) {
+      return null;
+    }
+    const size = this.radius * 3.4;
+    const glow = scene.add
+      .image(0, 0, TEXTURES.glow)
+      .setTint(this.style.glow)
+      .setAlpha(0.35)
+      .setDisplaySize(size, size)
+      .setBlendMode(Phaser.BlendModes.ADD);
+    scene.tweens.add({
+      targets: glow,
+      alpha: 0.7,
+      duration: 600,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut',
+    });
+    return glow;
   }
 
   private drawReticle(): void {

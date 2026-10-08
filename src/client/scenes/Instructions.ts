@@ -4,7 +4,14 @@ import { Button } from '../ui/Button';
 import { MenuScene } from '../ui/MenuScene';
 import { addText, addTitle } from '../ui/text';
 
-type Section = { heading: string; body: string };
+type Tone = 'accent' | 'danger' | 'gold';
+
+type Section = {
+  heading: string;
+  body: string;
+  /** Heading colour; matches the meteor it describes. */
+  tone?: Tone;
+};
 
 const INTRO =
   'Meteors are falling toward your starfighter. Each one carries a word. Type the word to blast the meteor out of the sky before it reaches you.';
@@ -24,11 +31,21 @@ const SECTIONS: readonly Section[] = [
   },
   {
     heading: 'LIVES',
-    body: 'You have 3 ships. Every meteor that crosses the red line costs one and resets your combo. Lose all 3 and the game is over.',
+    body: 'You have 3 ships. Every normal or golden meteor that crosses the red line costs one and resets your combo. Lose all 3 and the game is over.',
+  },
+  {
+    heading: 'DANGER WORDS',
+    tone: 'danger',
+    body: 'Red meteors with short words that fall fast and bounce off the sides three times. Letting one through never costs a life, but it takes 2 to 3 points off your score.',
+  },
+  {
+    heading: 'GOLDEN WORDS',
+    tone: 'gold',
+    body: 'Rare, glowing gold meteors carrying long expert words. They fall slowly, and finishing one pays a flat 25 points.',
   },
   {
     heading: 'SCORING & COMBOS',
-    body: 'Each meteor is worth 1 point per letter, so a 3-letter word scores 3 and long words pay more. Destroy meteors in a row to build a combo: 5 in a row doubles your points, 10 triples them and 20 quadruples them.',
+    body: 'Each meteor is worth 1 point per letter, so a 3-letter word scores 3. Destroy meteors in a row to build a combo: 5 in a row doubles your points, 10 triples them and 20 quadruples them (golden words always pay 25).',
   },
   {
     heading: 'DIFFICULTY',
@@ -72,15 +89,15 @@ export class Instructions extends MenuScene {
     objects.push(intro);
     let y = intro.y + intro.height + 22;
 
-    for (const { heading, body } of SECTIONS) {
+    for (const { heading, body, tone = 'accent' } of SECTIONS) {
       const marker = this.add
-        .rectangle(PADDING_X, y + 10, 4, 17, COLORS.accent)
+        .rectangle(PADDING_X, y + 10, 4, 17, COLORS[tone])
         .setOrigin(0, 0.5);
       const headingText = addText(this, PADDING_X + 14, y, heading, {
         fontFamily: FONTS.display,
         fontSize: '17px',
         fontStyle: '900',
-        color: CSS.accent,
+        color: CSS[tone],
       }).setLetterSpacing(2);
       const bodyText = addText(this, PADDING_X + 14, y + 26, body, {
         fontFamily: FONTS.body,

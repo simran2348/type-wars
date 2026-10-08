@@ -294,3 +294,10 @@ body {
 [hidden] {
   display: none !important;
 }
+
+/* Phones and tablets: slightly larger text (everything is sized in rem). */
+@media (any-pointer: coarse) {
+  html {
+    font-size: 18px;
+  }
+}

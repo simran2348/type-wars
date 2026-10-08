@@ -1,6 +1,20 @@
 import type * as Phaser from 'phaser';
 import { CSS, FONTS } from '../theme';
-import { viewFor } from '../view';
+import { isTouchDevice, viewFor } from '../view';
+
+/** Text is a little larger on phones and tablets, where it is read at arm's length. */
+const TOUCH_FONT_BOOST = 1.15;
+
+const boostFontSize = (size: string | number): string | number => {
+  if (!isTouchDevice()) {
+    return size;
+  }
+  if (typeof size === 'number') {
+    return Math.round(size * TOUCH_FONT_BOOST);
+  }
+  const px = size.match(/^(\d+(?:\.\d+)?)px$/);
+  return px ? `${Math.round(Number(px[1]) * TOUCH_FONT_BOOST)}px` : size;
+};
 
 /**
  * Adds a Text rendered at the camera's zoom, so it stays crisp on
@@ -15,6 +29,9 @@ export const addText = (
 ): Phaser.GameObjects.Text =>
   scene.add.text(x, y, value, {
     ...style,
+    ...(style.fontSize === undefined
+      ? {}
+      : { fontSize: boostFontSize(style.fontSize) }),
     resolution: viewFor(scene.scale).zoom,
   });
 

@@ -4,6 +4,7 @@ export const COLORS = {
   saber: 0x4bd5ee,
   danger: 0xff2b2b,
   bolt: 0x5dff6b,
+  gold: 0xffa000,
   panel: 0x06070b,
   panelBorder: 0x2a2e38,
 } as const;
@@ -14,6 +15,7 @@ export const CSS = {
   accent: '#ffe81f',
   saber: '#4bd5ee',
   danger: '#ff2b2b',
+  gold: '#ffa000',
   black: '#000000',
 } as const;
 

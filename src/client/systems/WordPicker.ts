@@ -20,24 +20,42 @@ export class WordPicker {
    * identifies a single meteor.
    */
   pick(weights: TierWeights, activeWords: ReadonlySet<string>): string {
-    const usedInitials = new Set([...activeWords].map((word) => word[0]));
     const preferred = this.rollTier(weights);
     const tiers = [preferred, ...WORD_TIERS.filter((t) => t !== preferred)];
 
     for (const avoidInitials of [true, false]) {
       for (const tier of tiers) {
-        const candidates = WORDS[tier].filter(
-          (word) =>
-            !activeWords.has(word) &&
-            !(avoidInitials && usedInitials.has(word[0]))
-        );
-        const word = candidates[Math.floor(this.random() * candidates.length)];
+        const word = this.pickIn(tier, activeWords, avoidInitials);
         if (word) {
           return word;
         }
       }
     }
     throw new Error('Word bank exhausted');
+  }
+
+  /** A word strictly from one tier, or null if every one is on screen. */
+  pickFromTier(
+    tier: WordTier,
+    activeWords: ReadonlySet<string>
+  ): string | null {
+    return (
+      this.pickIn(tier, activeWords, true) ??
+      this.pickIn(tier, activeWords, false)
+    );
+  }
+
+  private pickIn(
+    tier: WordTier,
+    activeWords: ReadonlySet<string>,
+    avoidInitials: boolean
+  ): string | null {
+    const usedInitials = new Set([...activeWords].map((word) => word[0]));
+    const candidates = WORDS[tier].filter(
+      (word) =>
+        !activeWords.has(word) && !(avoidInitials && usedInitials.has(word[0]))
+    );
+    return candidates[Math.floor(this.random() * candidates.length)] ?? null;
   }
 
   private rollTier(weights: TierWeights): WordTier {

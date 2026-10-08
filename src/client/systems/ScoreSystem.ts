@@ -1,3 +1,8 @@
+import type { MeteorKind } from '../entities/Meteor';
+
+/** Completing a golden word pays this flat amount, regardless of combo. */
+export const GOLDEN_POINTS = 25;
+
 /** Combo tiers: 5 in a row doubles points, 10 triples, 20 quadruples. */
 export const multiplierFor = (combo: number): number =>
   combo >= 20 ? 4 : combo >= 10 ? 3 : combo >= 5 ? 2 : 1;
@@ -42,13 +47,21 @@ export class ScoreSystem {
   }
 
   /** Returns the points awarded for the destroyed meteor. */
-  registerDestroyed(word: string): number {
+  registerDestroyed(word: string, kind: MeteorKind): number {
     this.combo += 1;
     this.bestCombo = Math.max(this.bestCombo, this.combo);
     this.destroyed += 1;
-    const points = pointsFor(word, this.combo);
+    const points =
+      kind === 'golden' ? GOLDEN_POINTS : pointsFor(word, this.combo);
     this.score += points;
     return points;
+  }
+
+  /** Deducts points without going below zero; returns how many were taken. */
+  registerPenalty(points: number): number {
+    const taken = Math.min(points, this.score);
+    this.score -= taken;
+    return taken;
   }
 
   breakCombo(): void {

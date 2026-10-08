@@ -64,10 +64,22 @@ export class Effects {
     this.sparks.explode(5, x, y);
   }
 
-  explode(x: number, y: number, radius: number): void {
-    this.fire.explode(18, x, y);
+  explode(x: number, y: number, radius: number, golden = false): void {
+    this.fire.explode(golden ? 32 : 18, x, y);
     this.debris.explode(10, x, y);
-    this.shockwave(x, y, radius * 3.2, COLORS.accent);
+    this.shockwave(
+      x,
+      y,
+      radius * (golden ? 4.5 : 3.2),
+      golden ? COLORS.gold : COLORS.accent
+    );
+  }
+
+  /** A danger meteor got through: a sting, lighter than losing a life. */
+  penaltyHit(x: number, y: number): void {
+    this.danger.explode(16, x, y);
+    this.shockwave(x, y, 140, COLORS.danger);
+    this.scene.cameras.main.shake(160, 0.006);
   }
 
   /** A meteor reached the ship. */
@@ -86,12 +98,18 @@ export class Effects {
     this.scene.cameras.main.shake(500, 0.02);
   }
 
-  scorePopup(x: number, y: number, text: string): void {
+  scorePopup(
+    x: number,
+    y: number,
+    text: string,
+    color: string = CSS.accent,
+    size = 20
+  ): void {
     const popup = addText(this.scene, x, y, text, {
       fontFamily: FONTS.display,
-      fontSize: '20px',
+      fontSize: `${size}px`,
       fontStyle: '900',
-      color: CSS.accent,
+      color,
       stroke: CSS.black,
       strokeThickness: 4,
     })

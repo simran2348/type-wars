@@ -12,11 +12,13 @@ import { ScoreSystem } from '../systems/ScoreSystem';
 import { Sfx } from '../systems/Sfx';
 import { TypingSystem } from '../systems/TypingSystem';
 import { WordPicker } from '../systems/WordPicker';
-import { COLORS } from '../theme';
+import { COLORS, CSS } from '../theme';
 import { applyView } from '../view';
 import { Hud } from '../ui/Hud';
 
 const STARTING_LIVES = 3;
+const DANGER_PENALTY_MIN = 2;
+const DANGER_PENALTY_MAX = 3;
 const GAME_OVER_DELAY_MS = 1100;
 const LETTER = /^[a-z]$/;
 
@@ -161,12 +163,18 @@ export class Game extends Scene {
   private onWordCompleted(meteor: Meteor) {
     meteor.markDestroyed();
     this.spawner.remove(meteor);
-    const points = this.score.registerDestroyed(meteor.word);
+    const points = this.score.registerDestroyed(meteor.word, meteor.kind);
+    const golden = meteor.kind === 'golden';
     this.effects.scorePopup(
       meteor.x,
       meteor.y - meteor.radius - 10,
-      `+${points}`
+      `+${points}`,
+      golden ? CSS.gold : CSS.accent,
+      golden ? 30 : 20
     );
+    if (golden) {
+      this.sfx.bonus();
+    }
   }
 
   private onBulletImpact(meteor: Meteor, x: number, y: number) {
@@ -175,7 +183,12 @@ export class Game extends Scene {
       return;
     }
     if (meteor.absorbBullet()) {
-      this.effects.explode(meteor.x, meteor.y, meteor.radius);
+      this.effects.explode(
+        meteor.x,
+        meteor.y,
+        meteor.radius,
+        meteor.kind === 'golden'
+      );
       this.sfx.explode();
       meteor.destroy();
     }
@@ -185,9 +198,14 @@ export class Game extends Scene {
     this.typing.release(meteor);
     this.spawner.remove(meteor);
     meteor.markMissed();
-    this.effects.shipHit(meteor.x, meteor.y);
     meteor.destroy();
 
+    if (meteor.kind === 'danger') {
+      this.onDangerPenalty(meteor.x, meteor.y);
+      return;
+    }
+
+    this.effects.shipHit(meteor.x, meteor.y);
     this.lives -= 1;
     this.score.breakCombo();
     this.sfx.lifeLost();
@@ -196,6 +214,16 @@ export class Game extends Scene {
     if (this.lives <= 0) {
       this.endGame();
     }
+  }
+
+  /** Danger meteors cost 2-3 points instead of a life. */
+  private onDangerPenalty(x: number, y: number) {
+    const penalty = Phaser.Math.Between(DANGER_PENALTY_MIN, DANGER_PENALTY_MAX);
+    this.score.registerPenalty(penalty);
+    this.effects.penaltyHit(x, y);
+    this.effects.scorePopup(x, y - 30, `-${penalty}`, CSS.danger, 24);
+    this.sfx.penalty();
+    this.refreshHud();
   }
 
   private endGame() {
