@@ -42,15 +42,85 @@ body {
   height: 100%;
 }
 
-.content {
-  position: relative;
+.screen {
+  position: absolute;
+  inset: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 10px;
-  width: 100%;
-  padding: 0 16px;
+  padding: 16px;
+  overflow-y: auto;
   text-align: center;
+}
+
+/* Tall content (top 10 x 2) scrolls from the top on short cards. */
+#leaderboard-screen {
+  justify-content: safe center;
+}
+
+.menu-buttons {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.secondary-button {
+  padding: 11px 32px;
+  border: 2px solid #ffe81f;
+  border-radius: 8px;
+  background: rgba(6, 7, 11, 0.85);
+  color: #ffe81f;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 900;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.secondary-button:hover {
+  transform: scale(1.05);
+}
+
+.screen-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: clamp(1.3rem, 5vw, 1.8rem);
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #000000;
+  -webkit-text-stroke: 1.5px #ffe81f;
+}
+
+.last-score {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  width: min(560px, 100%);
+  padding: 10px 14px;
+  border: 1px solid #2a2e38;
+  border-radius: 6px;
+  background: rgba(6, 7, 11, 0.85);
+}
+
+.last-score-label {
+  color: #ffe81f;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.last-score-value {
+  font-family: 'Share Tech Mono', ui-monospace, monospace;
+  font-size: 1.2rem;
 }
 
 /* Hollow yellow-outlined letters, like a classic space-saga logo. */
@@ -74,7 +144,6 @@ body {
 }
 
 .play-button {
-  margin-top: 6px;
   padding: 12px 56px;
   border: none;
   border-radius: 8px;
@@ -98,7 +167,7 @@ body {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
   width: min(560px, 100%);
-  margin-top: 10px;
+  flex: none;
 }
 
 .board {
@@ -129,8 +198,8 @@ body {
   justify-content: space-between;
   gap: 8px;
   font-family: 'Share Tech Mono', ui-monospace, monospace;
-  font-size: 0.95rem;
-  line-height: 1.45;
+  font-size: 1rem;
+  line-height: 1.5;
 }
 
 .board .name {
@@ -147,13 +216,6 @@ body {
   justify-content: center;
   color: #9aa0aa;
   font-family: 'News Cycle', sans-serif;
-}
-
-/* Short feed cards: drop the boards rather than squash everything. */
-@media (max-height: 340px) {
-  .boards {
-    display: none;
-  }
 }
 
 /* Admin: only revealed for admins (decided by the server). */

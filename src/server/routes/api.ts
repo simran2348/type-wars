@@ -8,8 +8,10 @@ import type {
 } from '../../shared/api';
 import { isAdmin } from '../core/admin';
 import {
+  getLastScore,
   getLeaderboards,
   parseScore,
+  recordLastScore,
   recordScore,
   resetScores,
 } from '../core/leaderboard';
@@ -19,13 +21,15 @@ export const api = new Hono();
 /** Both leaderboards plus the viewer's Reddit username. */
 api.get('/leaderboard', async (c) => {
   try {
-    const [username, leaderboards] = await Promise.all([
-      reddit.getCurrentUsername(),
+    const username = (await reddit.getCurrentUsername()) ?? null;
+    const [leaderboards, lastScore] = await Promise.all([
       getLeaderboards(),
+      getLastScore(username),
     ]);
     return c.json<LeaderboardResponse>({
-      username: username ?? null,
+      username,
       isAdmin: isAdmin(username),
+      lastScore,
       leaderboards,
     });
   } catch (error) {
@@ -63,6 +67,9 @@ api.post('/score', async (c) => {
   try {
     const username = (await reddit.getCurrentUsername()) ?? null;
     const recorded = username !== null && score > 0;
+    if (username !== null) {
+      await recordLastScore(username, score);
+    }
     if (recorded) {
       await recordScore(username, score);
     }
@@ -71,6 +78,7 @@ api.post('/score', async (c) => {
       recorded,
       username,
       isAdmin: isAdmin(username),
+      lastScore: username === null ? null : score,
       leaderboards: await getLeaderboards(),
     });
   } catch (error) {

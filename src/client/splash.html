@@ -27,10 +27,18 @@
         Reset all scores
       </button>
     </div>
-    <div class="content">
+    <main class="screen" id="home-screen">
       <h1 class="title">TYPE WARS</h1>
       <p class="subtitle">A typing space shooter</p>
-      <button class="play-button" id="play-button">PLAY</button>
+      <div class="menu-buttons">
+        <button class="play-button" id="play-button" type="button">PLAY</button>
+        <button class="secondary-button" id="leaderboards-button" type="button">
+          Leaderboards
+        </button>
+      </div>
+    </main>
+    <main class="screen" id="leaderboard-screen" hidden>
+      <h1 class="screen-title">Leaderboards</h1>
       <section class="boards" aria-label="Leaderboards">
         <div class="board">
           <h2>Today's Best</h2>
@@ -45,7 +53,14 @@
           </ol>
         </div>
       </section>
-    </div>
+      <div class="last-score">
+        <span class="last-score-label">Your last score</span>
+        <span class="last-score-value" id="last-score">…</span>
+      </div>
+      <button class="secondary-button" id="back-button" type="button">
+        Back
+      </button>
+    </main>
     <script type="module" src="splash.ts"></script>
   </body>
 </html>

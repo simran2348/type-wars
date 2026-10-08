@@ -22,6 +22,8 @@ export type LeaderboardResponse = {
   username: string | null;
   /** Whether the viewer may use admin actions; the server re-checks every call. */
   isAdmin: boolean;
+  /** The viewer's most recent score, or null if logged out or never played. */
+  lastScore: number | null;
   leaderboards: Leaderboards;
 };
 

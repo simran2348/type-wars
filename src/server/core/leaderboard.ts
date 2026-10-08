@@ -19,6 +19,9 @@ const DAILY_TTL_SECONDS = 60 * 60 * 24 * 3;
 const dailyKey = (now: Date): string =>
   `${KEY_PREFIX}:daily:${now.toISOString().slice(0, 10)}`;
 
+/** Hash of username -> score of their most recent game. */
+const LAST_SCORE_KEY = `${KEY_PREFIX}:last`;
+
 /** Per-board hash of username -> ISO timestamp of their best score. */
 const timestampsKey = (boardKey: string): string => `${boardKey}:recorded-at`;
 
@@ -112,7 +115,25 @@ const topEntries = async (key: string): Promise<LeaderboardEntry[]> => {
   return rows.map(({ member, score }) => ({ username: member, score }));
 };
 
-/** Deletes every leaderboard: all-time plus each daily board still alive. */
+/** Remembers a player's most recent score, whether or not it's a best. */
+export const recordLastScore = async (
+  username: string,
+  score: number
+): Promise<void> => {
+  await redis.hSet(LAST_SCORE_KEY, { [username]: String(score) });
+};
+
+export const getLastScore = async (
+  username: string | null
+): Promise<number | null> => {
+  if (username === null) {
+    return null;
+  }
+  const value = await redis.hGet(LAST_SCORE_KEY, username);
+  return value === undefined ? null : Number(value);
+};
+
+/** Deletes every leaderboard (all-time plus each daily board still alive) and last scores. */
 export const resetScores = async (): Promise<void> => {
   const now = Date.now();
   const days = Math.ceil(DAILY_TTL_SECONDS / (60 * 60 * 24));
@@ -120,7 +141,10 @@ export const resetScores = async (): Promise<void> => {
   for (let back = -1; back <= days; back++) {
     boards.push(dailyKey(new Date(now - back * 24 * 60 * 60 * 1000)));
   }
-  await redis.del(...boards.flatMap((key) => [key, timestampsKey(key)]));
+  await redis.del(
+    LAST_SCORE_KEY,
+    ...boards.flatMap((key) => [key, timestampsKey(key)])
+  );
 };
 
 export const getLeaderboards = async (): Promise<Leaderboards> => {
