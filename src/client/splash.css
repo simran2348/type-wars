@@ -1,0 +1,106 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family:
+    'Segoe UI',
+    system-ui,
+    -apple-system,
+    Roboto,
+    Helvetica,
+    Arial,
+    sans-serif;
+  color: #f4f6ff;
+  background:
+    radial-gradient(
+      ellipse at 20% 25%,
+      rgba(59, 42, 138, 0.45),
+      transparent 55%
+    ),
+    radial-gradient(
+      ellipse at 85% 80%,
+      rgba(15, 79, 138, 0.4),
+      transparent 55%
+    ),
+    #050714;
+}
+
+.app {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.stars {
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(1px 1px at 12% 18%, #fff, transparent),
+    radial-gradient(1px 1px at 72% 12%, #cfe0ff, transparent),
+    radial-gradient(1.5px 1.5px at 38% 64%, #fff, transparent),
+    radial-gradient(1px 1px at 88% 44%, #fff, transparent),
+    radial-gradient(1px 1px at 22% 82%, #cfe0ff, transparent),
+    radial-gradient(1.5px 1.5px at 58% 88%, #fff, transparent),
+    radial-gradient(1px 1px at 6% 52%, #fff, transparent),
+    radial-gradient(1px 1px at 94% 74%, #fff, transparent);
+  opacity: 0.8;
+}
+
+.content {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 0 16px;
+  text-align: center;
+}
+
+.title {
+  font-size: clamp(2.4rem, 9vw, 4rem);
+  font-style: italic;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-shadow:
+    0 0 24px rgba(92, 225, 255, 0.45),
+    0 4px 0 #1d3b8f;
+}
+
+.subtitle {
+  color: #5ce1ff;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+}
+
+.play-button {
+  margin-top: 12px;
+  padding: 14px 56px;
+  border: none;
+  border-radius: 999px;
+  background: #ffb547;
+  color: #1a1206;
+  font: inherit;
+  font-size: 1.2rem;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  cursor: pointer;
+  box-shadow: 0 0 28px rgba(255, 181, 71, 0.45);
+  transition: transform 0.15s ease;
+}
+
+.play-button:hover {
+  transform: scale(1.05);
+}
+
+.hint {
+  color: #8a93b8;
+  font-size: 0.9rem;
+}
