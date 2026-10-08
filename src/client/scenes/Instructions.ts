@@ -37,12 +37,12 @@ const SECTIONS: readonly Section[] = [
   {
     heading: 'DANGER WORDS',
     tone: 'danger',
-    body: 'Red meteors with short words that fall fast and bounce off the sides three times. Letting one through never costs a life, but it takes 2 to 3 points off your score.',
+    body: 'Every 4 to 6 words a red meteor appears with a short word. It falls fast and bounces off the sides three times. Letting one through never costs a life, but it takes 2 to 3 points off your score.',
   },
   {
     heading: 'GOLDEN WORDS',
     tone: 'gold',
-    body: 'Rare, glowing gold meteors carrying long expert words. They fall slowly, and finishing one pays a flat 25 points.',
+    body: 'Every 8 to 10 words a glowing gold meteor appears with a long expert word. It falls slowly, and finishing one pays a flat 25 points.',
   },
   {
     heading: 'SCORING & COMBOS',

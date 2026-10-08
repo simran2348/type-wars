@@ -7,6 +7,7 @@ import {
 } from '../entities/meteorPath';
 import type { Playfield } from '../playfield';
 import { travelSecondsFor, type Difficulty } from './Difficulty';
+import { SpecialScheduler } from './SpecialScheduler';
 import type { WordPicker } from './WordPicker';
 
 /** Delay before the first meteor and when the screen is empty. */
@@ -15,12 +16,6 @@ const SPAWN_ATTEMPTS = 8;
 /** New meteors keep at least this much horizontal distance from recent ones. */
 const MIN_SPAWN_GAP = 0.18;
 
-/** Chance a meteor is a danger meteor (easy word, fast, bounces, costs points). */
-const DANGER_CHANCE = 0.14;
-/** Chance a meteor is golden (expert word, slow, flat bonus). Rarer than danger. */
-const GOLDEN_CHANCE = 0.08;
-/** The first few meteors are always normal, so the opening stays calm. */
-const PLAIN_OPENING_METEORS = 3;
 /** Travel-time multipliers: below 1 is faster, above 1 is slower. */
 const TRAVEL_FACTOR: Record<MeteorKind, number> = {
   normal: 1,
@@ -55,7 +50,7 @@ export class MeteorSpawner {
   readonly meteors: Meteor[] = [];
   private readonly activeWords = new Set<string>();
   private sinceLastSpawnMs = 0;
-  private spawned = 0;
+  private readonly specials = new SpecialScheduler();
 
   constructor(
     private readonly scene: Phaser.Scene,
@@ -91,7 +86,7 @@ export class MeteorSpawner {
     const { kind, word } = this.pickKindAndWord(difficulty);
     const startX = this.pickStartX(field);
     this.activeWords.add(word);
-    this.spawned += 1;
+    this.specials.record(kind);
     this.meteors.push(
       new Meteor(
         this.scene,
@@ -108,27 +103,22 @@ export class MeteorSpawner {
     );
   }
 
-  /** Danger words come only from the easy list and golden ones from expert. */
+  /**
+   * Danger and golden meteors arrive on a schedule (see SpecialScheduler).
+   * Danger words come only from the easy list and golden ones from expert.
+   */
   private pickKindAndWord(difficulty: Difficulty): {
     kind: MeteorKind;
     word: string;
   } {
-    if (this.spawned >= PLAIN_OPENING_METEORS) {
-      const roll = Math.random();
-      const special: MeteorKind | null =
-        roll < GOLDEN_CHANCE
-          ? 'golden'
-          : roll < GOLDEN_CHANCE + DANGER_CHANCE
-            ? 'danger'
-            : null;
-      const word =
-        special &&
-        this.words.pickFromTier(
-          special === 'golden' ? 'expert' : 'easy',
-          this.activeWords
-        );
-      if (special && word) {
-        return { kind: special, word };
+    const kind = this.specials.next();
+    if (kind !== 'normal') {
+      const word = this.words.pickFromTier(
+        kind === 'golden' ? 'expert' : 'easy',
+        this.activeWords
+      );
+      if (word) {
+        return { kind, word };
       }
     }
     return {
