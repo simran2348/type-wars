@@ -14,12 +14,18 @@ const request = async <T>(path: string, init?: RequestInit): Promise<T> => {
   return data;
 };
 
-/** Submits the final score; the server responds with both leaderboards. */
-export const submitScore = (score: number): Promise<SubmitScoreResponse> => {
+/**
+ * Submits the final score; the server responds with both leaderboards.
+ * `headers` carries the run's analytics journey id, if any.
+ */
+export const submitScore = (
+  score: number,
+  headers: Record<string, string> = {}
+): Promise<SubmitScoreResponse> => {
   const body: SubmitScoreRequest = { score };
   return request('/api/score', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...headers },
     body: JSON.stringify(body),
   });
 };

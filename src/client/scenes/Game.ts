@@ -1,5 +1,11 @@
 import * as Phaser from 'phaser';
 import { Scene } from 'phaser';
+import {
+  startRun,
+  trackDestroyed,
+  trackInteraction,
+  trackScore,
+} from '../analytics';
 import { Bullets } from '../entities/Bullets';
 import type { Meteor } from '../entities/Meteor';
 import { Ship } from '../entities/Ship';
@@ -63,9 +69,11 @@ export class Game extends Scene {
 
     this.dangerLine = this.add.graphics();
     this.ship = new Ship(this, this.field.shipX, this.field.shipY).setDepth(4);
-    this.hud = new Hud(this, STARTING_LIVES, this.sfx.muted, () =>
-      this.sfx.toggleMuted()
-    );
+    this.hud = new Hud(this, STARTING_LIVES, this.sfx.muted, () => {
+      const muted = this.sfx.toggleMuted();
+      trackInteraction('sound_toggled', muted ? 'off' : 'on');
+      return muted;
+    });
     this.layout();
 
     // On touch devices letters come from the on-screen letter pad.
@@ -80,6 +88,8 @@ export class Game extends Scene {
     );
     this.scale.on(Phaser.Scale.Events.RESIZE, this.layout, this);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, this.cleanup, this);
+    // Every Game start is an explicit PLAY / PLAY AGAIN, i.e. a new journey.
+    startRun();
   }
 
   override update(_time: number, delta: number) {
@@ -183,6 +193,10 @@ export class Game extends Scene {
     meteor.markDestroyed();
     this.spawner.remove(meteor);
     const points = this.score.registerDestroyed(meteor.word, meteor.kind);
+    trackDestroyed(this.score.destroyed);
+    if (meteor.kind !== 'normal') {
+      trackInteraction(`${meteor.kind}_destroyed`);
+    }
     const golden = meteor.kind === 'golden';
     this.effects.scorePopup(
       meteor.x,
@@ -233,6 +247,7 @@ export class Game extends Scene {
     }
 
     this.lives -= 1;
+    trackInteraction('life_lost', String(this.lives));
     this.score.breakCombo();
     this.sfx.lifeLost();
     this.refreshHud();
@@ -267,6 +282,7 @@ export class Game extends Scene {
   }
 
   private refreshHud() {
+    trackScore(this.score.score);
     this.hud.update({
       score: this.score.score,
       combo: this.score.combo,

@@ -33,6 +33,8 @@ npm run dev     # playtest live on Reddit
 
 Admins are listed in `src/server/core/admin.ts`; words live in `src/client/data/words.ts`.
 
+Engagement analytics use [Devvit Journeys](https://developers.reddit.com/docs/capabilities/analytics/devvit-journeys): one run is one journey (`src/client/analytics.ts`), ended server-side with the validated score. Metrics appear under the app's **Analytics** tab once Reddit approves the app for Journeys.
+
 ## Credits
 
 Bootstrapped from the Devvit Phaser template, based on Phaser's [Vite TypeScript template](https://github.com/phaserjs/template-vite-ts).

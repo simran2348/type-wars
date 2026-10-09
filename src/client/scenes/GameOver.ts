@@ -1,4 +1,5 @@
 import type * as Phaser from 'phaser';
+import { finishRun } from '../analytics';
 import { submitScore } from '../api';
 import type { RunSummary } from '../systems/ScoreSystem';
 import { CSS, FONTS } from '../theme';
@@ -133,7 +134,8 @@ export class GameOver extends MenuScene {
   ): Promise<void> {
     try {
       const { leaderboards, username, recorded } = await submitScore(
-        this.summary.score
+        this.summary.score,
+        finishRun()
       );
       // The player may already have pressed PLAY AGAIN.
       if (!this.sys.isActive()) {

@@ -63,13 +63,13 @@ const recordOnBoard = async (
   username: string,
   score: number,
   now: Date
-): Promise<void> => {
+): Promise<boolean> => {
   if (!(await isBoard(key))) {
-    return;
+    return false;
   }
   const previous = await redis.zScore(key, username);
   if (previous !== undefined && previous >= score) {
-    return;
+    return false;
   }
 
   await redis.zAdd(key, { member: username, score });
@@ -85,16 +85,18 @@ const recordOnBoard = async (
       dropped.map((entry) => entry.member)
     );
   }
+  return true;
 };
 
+/** Records a run on both boards; resolves true if it is a new all-time personal best. */
 export const recordScore = async (
   username: string,
   score: number
-): Promise<void> => {
+): Promise<boolean> => {
   const now = new Date();
   const today = dailyKey(now);
 
-  await Promise.all([
+  const [personalBest] = await Promise.all([
     recordOnBoard(ALL_TIME_KEY, username, score, now),
     recordOnBoard(today, username, score, now),
   ]);
@@ -102,6 +104,7 @@ export const recordScore = async (
     redis.expire(today, DAILY_TTL_SECONDS),
     redis.expire(timestampsKey(today), DAILY_TTL_SECONDS),
   ]);
+  return personalBest;
 };
 
 const topEntries = async (key: string): Promise<LeaderboardEntry[]> => {

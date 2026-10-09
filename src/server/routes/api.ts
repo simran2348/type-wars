@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import { reddit } from '@devvit/web/server';
+import { telemetry } from '@devvit/analytics/server/reddit';
 import type {
   ErrorResponse,
   LeaderboardResponse,
@@ -15,8 +16,40 @@ import {
   recordScore,
   resetScores,
 } from '../core/leaderboard';
+import { journeys, parseJourneyId } from './journeys';
 
 export const api = new Hono();
+
+api.route('/telemetry', journeys);
+
+/** Header the client uses to pass its active Devvit Journeys id. */
+const JOURNEY_HEADER = 'x-devvit-journey-id';
+
+/**
+ * Ends the run's journey with the server-validated score. A "win" is a new
+ * all-time personal best. Analytics never block or fail score submission.
+ */
+const endRunJourney = async (
+  journeyId: string | null,
+  score: number,
+  personalBest: boolean
+): Promise<void> => {
+  if (!journeyId) {
+    return;
+  }
+  try {
+    const { receipt } = await telemetry.endJourney({
+      journeyId,
+      complete: true,
+      game: { win: personalBest, score },
+    });
+    if (receipt.status !== 'JOURNEY_RECEIPT_VALID') {
+      console.log(`Journey end not recorded: ${receipt.message}`);
+    }
+  } catch (error) {
+    console.error('Journey end failed:', error);
+  }
+};
 
 /** Both leaderboards plus the viewer's Reddit username. */
 api.get('/leaderboard', async (c) => {
@@ -70,9 +103,12 @@ api.post('/score', async (c) => {
     if (username !== null) {
       await recordLastScore(username, score);
     }
-    if (recorded) {
-      await recordScore(username, score);
-    }
+    const personalBest = recorded && (await recordScore(username, score));
+    await endRunJourney(
+      parseJourneyId(c.req.header(JOURNEY_HEADER)),
+      score,
+      personalBest
+    );
 
     return c.json<SubmitScoreResponse>({
       recorded,

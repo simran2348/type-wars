@@ -1,4 +1,5 @@
 import { Scene } from 'phaser';
+import { appReady } from '../analytics';
 import { createTextures } from '../textures';
 import { FONT_FACES } from '../theme';
 
@@ -24,6 +25,7 @@ export class Boot extends Scene {
       .then(() => {
         this.scene.launch('Background');
         this.scene.start('MainMenu');
+        appReady();
       });
   }
 }
