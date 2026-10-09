@@ -31,16 +31,28 @@ body {
   display: block;
 }
 
-/* Letter pad: compact QWERTY docked below the ship on touch devices. */
+/* Letter pad: QWERTY console docked below the ship on touch devices.
+   Crawl-yellow trim, dark durasteel keys, saber-blue hint on the next letter. */
 #letter-keyboard {
+  --key-height: clamp(44px, 7dvh, 54px);
+  --key-gap: 4px;
+  position: relative;
+  z-index: 1;
   flex: none;
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding: 8px 4px calc(8px + env(safe-area-inset-bottom));
-  background: #06070b;
-  border-top: 1px solid #2a2e38;
-  touch-action: manipulation;
+  gap: 7px;
+  padding: 10px 3px calc(10px + env(safe-area-inset-bottom));
+  background:
+    radial-gradient(
+      ellipse at 50% 0%,
+      rgba(255, 232, 31, 0.08),
+      transparent 70%
+    ),
+    linear-gradient(180deg, #0b0d14 0%, #040509 100%);
+  border-top: 2px solid #ffe81f;
+  box-shadow: 0 -2px 14px rgba(255, 232, 31, 0.35);
+  touch-action: none;
   user-select: none;
   -webkit-user-select: none;
   -webkit-touch-callout: none;
@@ -53,30 +65,78 @@ body {
 .keyboard-row {
   display: flex;
   justify-content: center;
-  gap: 5px;
+  gap: var(--key-gap);
 }
 
 /* Keys share the width of a 10-key row, so shorter rows stay centered with
    the same key size, like a real keyboard. */
 .key {
-  flex: 0 1 calc((100% - 45px) / 10);
-  max-width: 64px;
-  height: 46px;
+  flex: 0 1 calc((100% - 9 * var(--key-gap)) / 10);
+  max-width: 72px;
+  height: var(--key-height);
   padding: 0;
-  border: 1px solid #2a2e38;
-  border-radius: 6px;
-  background: #15171e;
-  color: #f2f2f2;
-  font-family: 'Share Tech Mono', ui-monospace, monospace;
-  font-size: 22px;
+  border: 1px solid rgba(255, 232, 31, 0.28);
+  border-bottom-width: 3px;
+  border-bottom-color: rgba(255, 232, 31, 0.45);
+  border-radius: 7px;
+  background: linear-gradient(180deg, #1c2030 0%, #10131c 100%);
+  color: #ffe81f;
+  font-family: 'Orbitron', 'Segoe UI', system-ui, sans-serif;
+  font-size: 19px;
+  font-weight: 700;
   text-transform: uppercase;
+  text-shadow: 0 0 6px rgba(255, 232, 31, 0.45);
   cursor: pointer;
-  touch-action: manipulation;
+  pointer-events: none;
   -webkit-tap-highlight-color: transparent;
+  transition:
+    background-color 80ms,
+    box-shadow 120ms;
+}
+
+/* The next letter of the locked word. */
+.key.hint {
+  border-color: #4bd5ee;
+  color: #ffffff;
+  text-shadow: 0 0 8px #4bd5ee;
+  box-shadow:
+    0 0 10px rgba(75, 213, 238, 0.55),
+    inset 0 0 8px rgba(75, 213, 238, 0.25);
 }
 
 .key.pressed {
   background: #ffe81f;
   border-color: #ffe81f;
   color: #000000;
+  text-shadow: none;
+  box-shadow: 0 0 16px rgba(255, 232, 31, 0.8);
+  transform: translateY(2px);
+}
+
+/* Enlarged letter shown above the finger while a key is pressed. */
+.key-preview {
+  position: absolute;
+  width: 46px;
+  height: 52px;
+  margin-left: -23px;
+  margin-top: -58px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #ffe81f;
+  border-radius: 8px;
+  background: #06070b;
+  color: #ffe81f;
+  font-family: 'Orbitron', 'Segoe UI', system-ui, sans-serif;
+  font-size: 28px;
+  font-weight: 900;
+  text-transform: uppercase;
+  box-shadow: 0 0 18px rgba(255, 232, 31, 0.6);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 90ms;
+}
+
+.key-preview.visible {
+  opacity: 1;
 }

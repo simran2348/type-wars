@@ -150,6 +150,13 @@ export class Game extends Scene {
       this.sfx.error();
     }
     this.refreshHud();
+    this.refreshKeyHint();
+  }
+
+  /** Lights up the next letter of the locked word on the touch letter pad. */
+  private refreshKeyHint() {
+    const target = this.typing.current;
+    letterKeyboard.setHint(target ? (target.word[target.typed] ?? null) : null);
   }
 
   private fireAt(meteor: Meteor) {
@@ -196,6 +203,7 @@ export class Game extends Scene {
 
   private onMeteorReachedShip(meteor: Meteor) {
     this.typing.release(meteor);
+    this.refreshKeyHint();
     this.spawner.remove(meteor);
     meteor.markMissed();
     meteor.destroy();
@@ -253,7 +261,9 @@ export class Game extends Scene {
   private layout() {
     const view = applyView(this);
     this.field = playfieldFor(view.width, view.height);
-    this.ship.setPosition(this.field.shipX, this.field.shipY);
+    this.ship
+      .setPosition(this.field.shipX, this.field.shipY)
+      .setScale(this.field.entityScale);
     this.hud.layout(this.field.width, this.field.height);
 
     // Faint warning band marking where meteors hit the ship.

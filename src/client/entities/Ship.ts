@@ -45,11 +45,12 @@ export class Ship extends Phaser.GameObjects.Container {
     scene.add.existing(this);
   }
 
-  /** World position bullets leave from, following the current aim. */
+  /** World position bullets leave from, following the current aim and size. */
   get muzzle(): { x: number; y: number } {
+    const nose = NOSE_OFFSET * this.scaleX;
     return {
-      x: this.x + Math.sin(this.aimAngle) * NOSE_OFFSET,
-      y: this.y + this.craft.y - Math.cos(this.aimAngle) * NOSE_OFFSET,
+      x: this.x + Math.sin(this.aimAngle) * nose,
+      y: this.y + this.craft.y * this.scaleY - Math.cos(this.aimAngle) * nose,
     };
   }
 

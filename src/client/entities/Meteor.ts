@@ -72,6 +72,7 @@ export class Meteor
   private readonly restText: Phaser.GameObjects.Text;
   private readonly charWidth: number;
   private readonly spin = Phaser.Math.FloatBetween(-0.8, 0.8);
+  private readonly sizeScale: number;
   private targeted = false;
   private incomingBullets = 0;
 
@@ -81,7 +82,8 @@ export class Meteor
     this.word = config.word;
     this.kind = config.kind;
     this.style = KIND_STYLES[config.kind];
-    this.radius = 24 + Math.min(this.word.length, 14) * 1.5;
+    this.sizeScale = field.entityScale;
+    this.radius = (24 + Math.min(this.word.length, 14) * 1.5) * this.sizeScale;
     this.place(field, 0);
 
     this.rock = scene.add
@@ -107,7 +109,9 @@ export class Meteor
     }).setOrigin(0, 0.5);
     this.charWidth = this.restText.width / this.word.length;
     this.pill = scene.add.graphics();
-    this.label = scene.add.container(0, this.radius * 0.6, [
+    // Smaller rocks push the label lower so it doesn't hide the rock.
+    const labelY = this.radius * 0.6 + (1 - this.sizeScale) * 20;
+    this.label = scene.add.container(0, labelY, [
       this.pill,
       this.typedText,
       this.restText,
@@ -165,7 +169,7 @@ export class Meteor
   /** Positions the meteor at trip progress t within the current playfield. */
   private place(field: Playfield, t: number): void {
     const { path } = this.config;
-    const margin = this.radius + 8;
+    const margin = this.radius + 8 * this.sizeScale;
     const laneWidth = Math.max(0, field.width - margin * 2);
     const x = margin + laneX(path, t) * laneWidth + swayOffset(path, t);
     this.x = Phaser.Math.Clamp(x, margin, field.width - margin);
@@ -285,7 +289,7 @@ export class Meteor
   }
 
   private drawReticle(): void {
-    const r = this.radius + 10;
+    const r = this.radius + 10 * this.sizeScale;
     this.reticle.lineStyle(2.5, COLORS.accent, 0.9);
     for (let i = 0; i < 4; i++) {
       const start = (i * Math.PI) / 2 + 0.25;
