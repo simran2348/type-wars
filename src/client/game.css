@@ -42,7 +42,9 @@ body {
   display: flex;
   flex-direction: column;
   gap: 7px;
-  padding: 10px 3px calc(10px + env(safe-area-inset-bottom));
+  padding: 10px calc(10px + env(safe-area-inset-right))
+    calc(10px + env(safe-area-inset-bottom))
+    calc(10px + env(safe-area-inset-left));
   background:
     radial-gradient(
       ellipse at 50% 0%,

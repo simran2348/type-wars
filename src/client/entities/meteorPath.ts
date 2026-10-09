@@ -4,7 +4,16 @@
  * with time, keeping the time to impact fair; only the sideways path varies.
  */
 
-/** Random curve with a sideways sway; used by normal and golden meteors. */
+/** Straight line from a random start to the ship; used by normal meteors. */
+export type LinePath = {
+  kind: 'line';
+  startX: number;
+};
+
+/** The ship sits at the centre of the lane. */
+export const SHIP_LANE_X = 0.5;
+
+/** Random curve with a sideways sway; used by golden meteors. */
 export type CurvePath = {
   kind: 'curve';
   startX: number;
@@ -27,7 +36,7 @@ export type BouncePath = {
   distance: number;
 };
 
-export type MeteorPath = CurvePath | BouncePath;
+export type MeteorPath = LinePath | CurvePath | BouncePath;
 
 export const BOUNCES = 3;
 
@@ -57,6 +66,9 @@ export const bouncePath = (
 
 /** Lane fraction (0..1) at trip progress t (0..1). */
 export const laneX = (path: MeteorPath, t: number): number => {
+  if (path.kind === 'line') {
+    return path.startX + (SHIP_LANE_X - path.startX) * t;
+  }
   if (path.kind === 'bounce') {
     // Travel in the positive direction from the mirrored start, then mirror back.
     const start = path.direction === 1 ? path.startX : 1 - path.startX;

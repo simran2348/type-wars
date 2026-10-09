@@ -4,6 +4,7 @@ import {
   bouncePath,
   type BouncePath,
   type CurvePath,
+  type MeteorPath,
 } from '../entities/meteorPath';
 import type { Playfield } from '../playfield';
 import { travelSecondsFor, type Difficulty } from './Difficulty';
@@ -23,7 +24,7 @@ const TRAVEL_FACTOR: Record<MeteorKind, number> = {
   golden: 1.35,
 };
 
-/** A fresh, independent route for every meteor so no two paths repeat. */
+/** Golden meteors: a fresh, independent curve so no two paths repeat. */
 const randomCurve = (startX: number): CurvePath => ({
   kind: 'curve',
   startX,
@@ -34,13 +35,25 @@ const randomCurve = (startX: number): CurvePath => ({
   swayPhase: Phaser.Math.FloatBetween(0, Math.PI * 2),
 });
 
-/** Bounces off the side walls three times on the way down. */
+/** Danger meteors bounce off the side walls three times on the way down. */
 const randomBounce = (startX: number): BouncePath =>
   bouncePath(
     startX,
     Math.random() < 0.5 ? 1 : -1,
     Phaser.Math.FloatBetween(0.15, 0.85)
   );
+
+/** Normal meteors fly straight at the ship from a random start. */
+const pathFor = (kind: MeteorKind, startX: number): MeteorPath => {
+  switch (kind) {
+    case 'normal':
+      return { kind: 'line', startX };
+    case 'danger':
+      return randomBounce(startX);
+    case 'golden':
+      return randomCurve(startX);
+  }
+};
 
 /**
  * Owns the live meteors and the words on screen, and decides when, where and
@@ -93,7 +106,7 @@ export class MeteorSpawner {
         {
           word,
           kind,
-          path: kind === 'danger' ? randomBounce(startX) : randomCurve(startX),
+          path: pathFor(kind, startX),
           travelSeconds:
             travelSecondsFor(word, difficulty) * TRAVEL_FACTOR[kind],
           fontSize: field.wordFontSize,
