@@ -5,7 +5,8 @@ import { COLORS, CSS, FONTS, TEXTURES } from '../theme';
 import { addText } from '../ui/text';
 import { laneX, swayOffset, type MeteorPath } from './meteorPath';
 
-export type MeteorState = 'active' | 'destroyed' | 'missed';
+/** `passed`: crossed the red line and keeps falling, but can no longer be shot. */
+export type MeteorState = 'active' | 'destroyed' | 'missed' | 'passed';
 
 /** Normal meteors cost a life; danger ones cost points; golden ones pay a flat bonus. */
 export type MeteorKind = 'normal' | 'danger' | 'golden';
@@ -159,11 +160,19 @@ export class Meteor
   step(dt: number, field: Playfield): void {
     this.rock.rotation += this.spin * dt;
     this.reticle.rotation += 1.5 * dt;
-    if (this.status !== 'active') {
+    if (this.status === 'active') {
+      this.travel = Math.min(1, this.travel + dt / this.config.travelSeconds);
+    } else if (this.status === 'passed') {
+      this.travel += dt / this.config.travelSeconds;
+    } else {
       return;
     }
-    this.travel = Math.min(1, this.travel + dt / this.config.travelSeconds);
     this.place(field, this.travel);
+  }
+
+  /** True once a passed meteor has fallen out of view. */
+  isBelow(field: Playfield): boolean {
+    return this.y - this.radius * 2 > field.height;
   }
 
   /** Positions the meteor at trip progress t within the current playfield. */
@@ -217,6 +226,13 @@ export class Meteor
 
   markMissed(): void {
     this.status = 'missed';
+  }
+
+  /** Crossed the red line: keeps falling off screen, dimmed and out of reach. */
+  markPassed(): void {
+    this.status = 'passed';
+    this.reticle.setVisible(false);
+    this.setDepth(0).setAlpha(0.45);
   }
 
   flashError(): void {

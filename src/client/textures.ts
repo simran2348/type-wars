@@ -206,6 +206,30 @@ const ring: Painter = (ctx, w) => {
   ctx.fillRect(0, 0, w, w);
 };
 
+/** Life icon: a red heart with a soft highlight. */
+const heart: Painter = (ctx, w, h) => {
+  ctx.beginPath();
+  ctx.moveTo(w / 2, h * 0.92);
+  ctx.bezierCurveTo(w * 0.05, h * 0.62, w * 0.02, h * 0.3, w * 0.22, h * 0.14);
+  ctx.bezierCurveTo(w * 0.36, h * 0.03, w * 0.48, h * 0.12, w / 2, h * 0.26);
+  ctx.bezierCurveTo(w * 0.52, h * 0.12, w * 0.64, h * 0.03, w * 0.78, h * 0.14);
+  ctx.bezierCurveTo(w * 0.98, h * 0.3, w * 0.95, h * 0.62, w / 2, h * 0.92);
+  ctx.closePath();
+  const fill = ctx.createLinearGradient(0, 0, 0, h);
+  fill.addColorStop(0, '#ff5a5a');
+  fill.addColorStop(1, '#c01020');
+  ctx.fillStyle = fill;
+  ctx.fill();
+  ctx.lineWidth = 1.2;
+  ctx.strokeStyle = '#5a0710';
+  ctx.stroke();
+
+  ctx.fillStyle = 'rgba(255,255,255,0.55)';
+  ctx.beginPath();
+  ctx.ellipse(w * 0.3, h * 0.28, w * 0.08, h * 0.05, -0.6, 0, Math.PI * 2);
+  ctx.fill();
+};
+
 const stars =
   (
     count: number,
@@ -229,6 +253,7 @@ const stars =
 export const createTextures = (scene: Scene): void => {
   paint(scene, TEXTURES.ship, 64, 66, ship);
   paint(scene, TEXTURES.flame, 20, 40, flame);
+  paint(scene, TEXTURES.heart, 24, 22, heart);
   TEXTURES.meteors.forEach((key, i) =>
     paint(scene, key, 96, 96, meteor(i + 1))
   );

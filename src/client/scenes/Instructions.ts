@@ -32,7 +32,7 @@ const SECTIONS: readonly Section[] = [
   },
   {
     heading: 'LIVES',
-    body: 'You have 3 ships. Every normal or golden meteor that crosses the red line costs one and resets your combo. Lose all 3 and the game is over.',
+    body: 'You have 3 hearts, shown by your ship. Every normal or golden meteor that crosses the red line costs one and resets your combo. Lose all 3 and the game is over. Danger and golden meteors keep falling past the line, but once they cross it they can no longer be shot.',
   },
   {
     heading: 'DANGER WORDS',

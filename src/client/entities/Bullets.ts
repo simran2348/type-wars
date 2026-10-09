@@ -38,7 +38,10 @@ export class Bullets {
   update(dt: number, onImpact: ImpactHandler): void {
     const step = SPEED * dt;
     this.shots = this.shots.filter((shot) => {
-      if (shot.target.status !== 'missed') {
+      if (
+        shot.target.status === 'active' ||
+        shot.target.status === 'destroyed'
+      ) {
         shot.aimX = shot.target.x;
         shot.aimY = shot.target.y;
       }

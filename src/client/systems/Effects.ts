@@ -75,13 +75,6 @@ export class Effects {
     );
   }
 
-  /** A danger meteor got through: a sting, lighter than losing a life. */
-  penaltyHit(x: number, y: number): void {
-    this.danger.explode(16, x, y);
-    this.shockwave(x, y, 140, COLORS.danger);
-    this.scene.cameras.main.shake(160, 0.006);
-  }
-
   /** A meteor reached the ship. */
   shipHit(x: number, y: number): void {
     this.danger.explode(26, x, y);

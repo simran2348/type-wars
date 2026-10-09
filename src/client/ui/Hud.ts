@@ -4,7 +4,9 @@ import { CSS, FONTS, TEXTURES } from '../theme';
 import { addText } from './text';
 
 const MARGIN = 16;
-const LIFE_SPACING = 36;
+const LIFE_SPACING = 30;
+/** Hearts sit in the bottom-left corner of the red zone, by the ship. */
+const HEART_SIZE = 24;
 
 export type HudState = {
   score: number;
@@ -52,8 +54,9 @@ export class Hud {
       .setVisible(false);
     this.lifeIcons = Array.from({ length: maxLives }, () =>
       scene.add
-        .image(0, MARGIN + 16, TEXTURES.ship)
-        .setScale(0.48 * TEXTURE_SCALE)
+        .image(0, 0, TEXTURES.heart)
+        .setOrigin(0, 1)
+        .setScale((HEART_SIZE / 24) * TEXTURE_SCALE)
     );
     this.soundText = addText(scene, 0, 0, '', {
       fontFamily: FONTS.display,
@@ -80,9 +83,7 @@ export class Hud {
 
   layout(width: number, height: number): void {
     this.lifeIcons.forEach((icon, i) =>
-      icon.setX(
-        width - MARGIN - 16 - (this.lifeIcons.length - 1 - i) * LIFE_SPACING
-      )
+      icon.setPosition(MARGIN + i * LIFE_SPACING, height - MARGIN + 2)
     );
     this.soundText.setPosition(width - MARGIN, height - MARGIN);
   }
@@ -107,7 +108,7 @@ export class Hud {
 
     if (lives !== this.lives) {
       this.lives = lives;
-      this.lifeIcons.forEach((icon, i) => icon.setAlpha(i < lives ? 1 : 0.15));
+      this.lifeIcons.forEach((icon, i) => icon.setAlpha(i < lives ? 1 : 0.2));
     }
   }
 

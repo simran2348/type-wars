@@ -39,6 +39,7 @@ export const FONT_FACES = [
 
 export const TEXTURES = {
   ship: 'ship',
+  heart: 'heart',
   flame: 'flame',
   meteors: ['meteor-0', 'meteor-1', 'meteor-2'],
   bullet: 'bullet',

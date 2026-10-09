@@ -38,6 +38,8 @@ export class Game extends Scene {
   private effects: Effects;
   private sfx: Sfx;
   private hud: Hud;
+  /** Danger and golden meteors past the red line, falling off screen. */
+  private passing: Meteor[];
   private unsubscribeLetters: () => void;
 
   constructor() {
@@ -49,6 +51,7 @@ export class Game extends Scene {
     this.state = 'playing';
     this.lives = STARTING_LIVES;
     this.elapsedSeconds = 0;
+    this.passing = [];
     const view = applyView(this);
     this.field = playfieldFor(view.width, view.height);
     this.score = new ScoreSystem();
@@ -102,6 +105,15 @@ export class Game extends Scene {
         }
       }
     }
+
+    this.passing = this.passing.filter((meteor) => {
+      meteor.step(dt, this.field);
+      if (meteor.isBelow(this.field)) {
+        meteor.destroy();
+        return false;
+      }
+      return true;
+    });
 
     this.bullets.update(dt, (meteor, x, y) =>
       this.onBulletImpact(meteor, x, y)
@@ -186,7 +198,7 @@ export class Game extends Scene {
 
   private onBulletImpact(meteor: Meteor, x: number, y: number) {
     this.effects.impact(x, y);
-    if (meteor.status === 'missed') {
+    if (meteor.status === 'missed' || meteor.status === 'passed') {
       return;
     }
     if (meteor.absorbBullet()) {
@@ -205,15 +217,21 @@ export class Game extends Scene {
     this.typing.release(meteor);
     this.refreshKeyHint();
     this.spawner.remove(meteor);
-    meteor.markMissed();
-    meteor.destroy();
 
-    if (meteor.kind === 'danger') {
-      this.onDangerPenalty(meteor.x, meteor.y);
-      return;
+    if (meteor.kind === 'normal') {
+      meteor.markMissed();
+      meteor.destroy();
+      this.effects.shipHit(meteor.x, meteor.y);
+    } else {
+      // Specials fly on past the red line without a blast; only the rule applies.
+      meteor.markPassed();
+      this.passing.push(meteor);
+      if (meteor.kind === 'danger') {
+        this.onDangerPenalty(meteor.x, meteor.y);
+        return;
+      }
     }
 
-    this.effects.shipHit(meteor.x, meteor.y);
     this.lives -= 1;
     this.score.breakCombo();
     this.sfx.lifeLost();
@@ -228,7 +246,6 @@ export class Game extends Scene {
   private onDangerPenalty(x: number, y: number) {
     const penalty = Phaser.Math.Between(DANGER_PENALTY_MIN, DANGER_PENALTY_MAX);
     this.score.registerPenalty(penalty);
-    this.effects.penaltyHit(x, y);
     this.effects.scorePopup(x, y - 30, `-${penalty}`, CSS.danger, 24);
     this.sfx.penalty();
     this.refreshHud();
