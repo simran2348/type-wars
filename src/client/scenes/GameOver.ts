@@ -1,6 +1,6 @@
 import type * as Phaser from 'phaser';
 import { finishRun } from '../analytics';
-import { submitScore } from '../api';
+import { commentScore, submitScore } from '../api';
 import type { RunSummary } from '../systems/ScoreSystem';
 import { CSS, FONTS } from '../theme';
 import { Button } from '../ui/Button';
@@ -19,10 +19,13 @@ const ENTER_DELAY_MS = 800;
 /** Overlay shown on top of the frozen Game scene. */
 export class GameOver extends MenuScene {
   protected readonly designWidth = LEADERBOARD_PANEL_WIDTH + 40;
-  protected readonly designHeight = PANEL_TOP + LEADERBOARD_PANEL_HEIGHT + 104;
+  protected readonly designHeight = PANEL_TOP + LEADERBOARD_PANEL_HEIGHT + 194;
   private summary: RunSummary;
   private shade: Phaser.GameObjects.Rectangle;
   private shownAt: number;
+  private commentButton: Button;
+  private commentNote: Phaser.GameObjects.Text;
+  private commenting: boolean;
 
   constructor() {
     super('GameOver');
@@ -56,6 +59,22 @@ export class GameOver extends MenuScene {
       '',
       { fontFamily: FONTS.body, fontSize: '18px', color: CSS.muted }
     ).setOrigin(0.5);
+    const below = PANEL_TOP + LEADERBOARD_PANEL_HEIGHT;
+    // Shown only once the score is saved; commenting is always the player's choice.
+    this.commenting = false;
+    this.commentButton = new Button(
+      this,
+      cx,
+      below + 62,
+      'COMMENT MY SCORE',
+      () => void this.comment(),
+      { width: 360, height: 46, variant: 'secondary' }
+    ).setVisible(false);
+    this.commentNote = addText(this, cx, below + 96, '', {
+      fontFamily: FONTS.body,
+      fontSize: '16px',
+      color: CSS.muted,
+    }).setOrigin(0.5);
     void this.submit(panel, note);
 
     return [
@@ -89,6 +108,8 @@ export class GameOver extends MenuScene {
       ).setOrigin(0.5),
       panel,
       note,
+      this.commentButton,
+      this.commentNote,
       new Button(
         this,
         cx - 140,
@@ -133,10 +154,8 @@ export class GameOver extends MenuScene {
     note: Phaser.GameObjects.Text
   ): Promise<void> {
     try {
-      const { leaderboards, username, recorded } = await submitScore(
-        this.summary.score,
-        finishRun()
-      );
+      const { leaderboards, username, recorded, canComment } =
+        await submitScore(this.summary.score, finishRun());
       // The player may already have pressed PLAY AGAIN.
       if (!this.sys.isActive()) {
         return;
@@ -145,10 +164,39 @@ export class GameOver extends MenuScene {
       if (!recorded && username === null) {
         note.setText('Log in to Reddit to save your scores.');
       }
+      if (canComment) {
+        this.commentButton.setVisible(true);
+        this.commentNote.setText(
+          'Posts a comment on this post from your Reddit account'
+        );
+      }
     } catch (error) {
       console.error(error);
       if (this.sys.isActive()) {
         panel.showMessage('Leaderboard unavailable');
+      }
+    }
+  }
+
+  /** Posts the score as a comment; only ever runs from the button. */
+  private async comment(): Promise<void> {
+    if (this.commenting) {
+      return;
+    }
+    this.commenting = true;
+    this.commentButton.setVisible(false);
+    this.commentNote.setText('Posting your comment…');
+    try {
+      await commentScore();
+      if (this.sys.isActive()) {
+        this.commentNote.setText('Comment posted! Check below the post.');
+      }
+    } catch (error) {
+      console.error(error);
+      if (this.sys.isActive()) {
+        this.commenting = false;
+        this.commentButton.setVisible(true);
+        this.commentNote.setText('Could not post the comment. Try again.');
       }
     }
   }

@@ -34,6 +34,12 @@ export type ResetScoresResponse = {
 export type SubmitScoreResponse = LeaderboardResponse & {
   /** False when the score was not recorded (e.g. logged-out viewer). */
   recorded: boolean;
+  /** True when the player may post this run's score as a comment. */
+  canComment: boolean;
+};
+
+export type CommentScoreResponse = {
+  status: 'ok';
 };
 
 export type ErrorResponse = {

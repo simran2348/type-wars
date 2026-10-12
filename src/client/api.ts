@@ -1,4 +1,5 @@
 import type {
+  CommentScoreResponse,
   LeaderboardResponse,
   ResetScoresResponse,
   SubmitScoreRequest,
@@ -32,6 +33,10 @@ export const submitScore = (
 
 export const fetchLeaderboards = (): Promise<LeaderboardResponse> =>
   request('/api/leaderboard');
+
+/** Posts the just-finished run's score as a comment from the player's account. */
+export const commentScore = (): Promise<CommentScoreResponse> =>
+  request('/api/score/comment', { method: 'POST' });
 
 /** Admin only; the server rejects anyone else. */
 export const resetAllScores = (): Promise<ResetScoresResponse> =>

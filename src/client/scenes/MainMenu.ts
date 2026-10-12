@@ -52,11 +52,6 @@ export class MainMenu extends MenuScene {
         () => this.scene.start('Leaderboard'),
         { width: 240, height: 56, variant: 'secondary' }
       ),
-      addText(this, cx, 425, 'Type the words on the meteors to destroy them.', {
-        fontFamily: FONTS.body,
-        fontSize: '21px',
-        color: CSS.muted,
-      }).setOrigin(0.5),
     ];
   }
 

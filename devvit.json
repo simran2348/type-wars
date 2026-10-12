@@ -18,7 +18,10 @@
     "entry": "index.cjs"
   },
   "permissions": {
-    "journeys": true
+    "journeys": true,
+    "reddit": {
+      "asUser": ["SUBMIT_COMMENT"]
+    }
   },
   "menu": {
     "items": [

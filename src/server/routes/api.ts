@@ -1,7 +1,8 @@
 import { Hono } from 'hono';
-import { reddit } from '@devvit/web/server';
+import { context, reddit } from '@devvit/web/server';
 import { telemetry } from '@devvit/analytics/server/reddit';
 import type {
+  CommentScoreResponse,
   ErrorResponse,
   LeaderboardResponse,
   ResetScoresResponse,
@@ -15,6 +16,8 @@ import {
   recordLastScore,
   recordScore,
   resetScores,
+  setPendingComment,
+  takePendingComment,
 } from '../core/leaderboard';
 import { journeys, parseJourneyId } from './journeys';
 
@@ -104,6 +107,10 @@ api.post('/score', async (c) => {
       await recordLastScore(username, score);
     }
     const personalBest = recorded && (await recordScore(username, score));
+    const canComment = recorded && context.postId !== undefined;
+    if (username !== null) {
+      await setPendingComment(username, canComment ? score : null);
+    }
     await endRunJourney(
       parseJourneyId(c.req.header(JOURNEY_HEADER)),
       score,
@@ -112,6 +119,7 @@ api.post('/score', async (c) => {
 
     return c.json<SubmitScoreResponse>({
       recorded,
+      canComment,
       username,
       isAdmin: isAdmin(username),
       lastScore: username === null ? null : score,
@@ -121,6 +129,47 @@ api.post('/score', async (c) => {
     console.error('Score submission failed:', error);
     return c.json<ErrorResponse>(
       { status: 'error', message: 'Could not save score' },
+      500
+    );
+  }
+});
+
+/**
+ * Posts the player's just-finished score as a comment on this post, from
+ * their own account. Only ever called from an explicit button press. The
+ * score comes from the server's record of the run, never from the request.
+ */
+api.post('/score/comment', async (c) => {
+  const { postId } = context;
+  const username = (await reddit.getCurrentUsername()) ?? null;
+  if (username === null || postId === undefined) {
+    return c.json<ErrorResponse>(
+      { status: 'error', message: 'Log in to Reddit to comment' },
+      401
+    );
+  }
+
+  const score = await takePendingComment(username);
+  if (score === null) {
+    return c.json<ErrorResponse>(
+      { status: 'error', message: 'No score to share' },
+      409
+    );
+  }
+
+  try {
+    await reddit.submitComment({
+      id: postId,
+      text: `🚀 Scored **${score.toLocaleString('en-US')}** in Type Wars. Can you beat it?`,
+      runAs: 'USER',
+    });
+    return c.json<CommentScoreResponse>({ status: 'ok' });
+  } catch (error) {
+    console.error('Score comment failed:', error);
+    // Give the player another try.
+    await setPendingComment(username, score);
+    return c.json<ErrorResponse>(
+      { status: 'error', message: 'Could not post comment' },
       500
     );
   }

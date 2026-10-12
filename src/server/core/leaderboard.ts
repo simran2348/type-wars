@@ -22,6 +22,9 @@ const dailyKey = (now: Date): string =>
 /** Hash of username -> score of their most recent game. */
 const LAST_SCORE_KEY = `${KEY_PREFIX}:last`;
 
+/** Hash of username -> finished-run score they may still post as a comment. */
+const COMMENT_PENDING_KEY = `${KEY_PREFIX}:comment-pending`;
+
 /** Per-board hash of username -> ISO timestamp of their best score. */
 const timestampsKey = (boardKey: string): string => `${boardKey}:recorded-at`;
 
@@ -136,6 +139,33 @@ export const getLastScore = async (
   return value === undefined ? null : Number(value);
 };
 
+/**
+ * Marks the run just finished as commentable (or clears the mark with null),
+ * so each run can be shared at most once and only with its real score.
+ */
+export const setPendingComment = async (
+  username: string,
+  score: number | null
+): Promise<void> => {
+  if (score === null) {
+    await redis.hDel(COMMENT_PENDING_KEY, [username]);
+  } else {
+    await redis.hSet(COMMENT_PENDING_KEY, { [username]: String(score) });
+  }
+};
+
+/** Claims the player's commentable score, or null if there is none left. */
+export const takePendingComment = async (
+  username: string
+): Promise<number | null> => {
+  const value = await redis.hGet(COMMENT_PENDING_KEY, username);
+  if (value === undefined) {
+    return null;
+  }
+  await redis.hDel(COMMENT_PENDING_KEY, [username]);
+  return Number(value);
+};
+
 /** Deletes every leaderboard (all-time plus each daily board still alive) and last scores. */
 export const resetScores = async (): Promise<void> => {
   const now = Date.now();
@@ -146,6 +176,7 @@ export const resetScores = async (): Promise<void> => {
   }
   await redis.del(
     LAST_SCORE_KEY,
+    COMMENT_PENDING_KEY,
     ...boards.flatMap((key) => [key, timestampsKey(key)])
   );
 };
