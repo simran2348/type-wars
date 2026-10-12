@@ -1,6 +1,12 @@
-import { WORDS, WORD_TIERS, type WordTier } from '../data/words';
+import {
+  NORMAL_TIERS,
+  WORDS,
+  type NormalTier,
+  type WordTier,
+} from '../data/words';
 
-export type TierWeights = Record<WordTier, number>;
+/** Chance weights for the normal tiers; golden words are never rolled. */
+export type TierWeights = Record<NormalTier, number>;
 
 /** Returns a float in [0, 1). */
 export type RandomSource = () => number;
@@ -21,7 +27,7 @@ export class WordPicker {
    */
   pick(weights: TierWeights, activeWords: ReadonlySet<string>): string {
     const preferred = this.rollTier(weights);
-    const tiers = [preferred, ...WORD_TIERS.filter((t) => t !== preferred)];
+    const tiers = [preferred, ...NORMAL_TIERS.filter((t) => t !== preferred)];
 
     for (const avoidInitials of [true, false]) {
       for (const tier of tiers) {
@@ -58,10 +64,10 @@ export class WordPicker {
     return candidates[Math.floor(this.random() * candidates.length)] ?? null;
   }
 
-  private rollTier(weights: TierWeights): WordTier {
-    const total = WORD_TIERS.reduce((sum, tier) => sum + weights[tier], 0);
+  private rollTier(weights: TierWeights): NormalTier {
+    const total = NORMAL_TIERS.reduce((sum, tier) => sum + weights[tier], 0);
     let roll = this.random() * total;
-    for (const tier of WORD_TIERS) {
+    for (const tier of NORMAL_TIERS) {
       roll -= weights[tier];
       if (roll < 0) {
         return tier;

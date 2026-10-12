@@ -7,7 +7,8 @@ import {
   type MeteorPath,
 } from '../entities/meteorPath';
 import type { Playfield } from '../playfield';
-import { travelSecondsFor, type Difficulty } from './Difficulty';
+import type { NormalTier } from '../data/words';
+import type { Difficulty } from './Difficulty';
 import { SpecialScheduler } from './SpecialScheduler';
 import type { WordPicker } from './WordPicker';
 
@@ -17,12 +18,18 @@ const SPAWN_ATTEMPTS = 8;
 /** New meteors keep at least this much horizontal distance from recent ones. */
 const MIN_SPAWN_GAP = 0.18;
 
-/** Travel-time multipliers: below 1 is faster, above 1 is slower. */
+/**
+ * The only three speeds in the game, as travel-time multipliers: below 1 is
+ * faster, above 1 is slower. Word length never changes a meteor's speed.
+ */
 const TRAVEL_FACTOR: Record<MeteorKind, number> = {
   normal: 1,
   danger: 0.6,
-  golden: 1.35,
+  golden: 1.8,
 };
+
+/** Danger meteors carry short words: 3 or 4 letters. */
+const DANGER_TIERS: readonly NormalTier[] = ['easy', 'medium'];
 
 /** Golden meteors: a fresh, independent curve so no two paths repeat. */
 const randomCurve = (startX: number): CurvePath => ({
@@ -107,8 +114,7 @@ export class MeteorSpawner {
           word,
           kind,
           path: pathFor(kind, startX),
-          travelSeconds:
-            travelSecondsFor(word, difficulty) * TRAVEL_FACTOR[kind],
+          travelSeconds: difficulty.baseTravelSeconds * TRAVEL_FACTOR[kind],
           fontSize: field.wordFontSize,
         },
         field
@@ -118,7 +124,7 @@ export class MeteorSpawner {
 
   /**
    * Danger and golden meteors arrive on a schedule (see SpecialScheduler).
-   * Danger words come only from the easy list and golden ones from expert.
+   * Danger words are easy or medium (3-4 letters); golden ones are longer than 8.
    */
   private pickKindAndWord(difficulty: Difficulty): {
     kind: MeteorKind;
@@ -126,10 +132,10 @@ export class MeteorSpawner {
   } {
     const kind = this.specials.next();
     if (kind !== 'normal') {
-      const word = this.words.pickFromTier(
-        kind === 'golden' ? 'expert' : 'easy',
-        this.activeWords
-      );
+      const word =
+        kind === 'golden'
+          ? this.words.pickFromTier('golden', this.activeWords)
+          : this.pickDangerWord();
       if (word) {
         return { kind, word };
       }
@@ -138,6 +144,18 @@ export class MeteorSpawner {
       kind: 'normal',
       word: this.words.pick(difficulty.tierWeights, this.activeWords),
     };
+  }
+
+  /** A word from a random danger tier, falling back to the other one. */
+  private pickDangerWord(): string | null {
+    const tiers = Phaser.Utils.Array.Shuffle([...DANGER_TIERS]);
+    for (const tier of tiers) {
+      const word = this.words.pickFromTier(tier, this.activeWords);
+      if (word) {
+        return word;
+      }
+    }
+    return null;
   }
 
   /**

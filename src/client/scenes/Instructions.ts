@@ -37,12 +37,12 @@ const SECTIONS: readonly Section[] = [
   {
     heading: 'DANGER WORDS',
     tone: 'danger',
-    body: 'Every 4 to 6 words a red meteor appears with a short word. It falls fast and bounces off the sides three times. Letting one through never costs a life, but it takes 2 to 3 points off your score.',
+    body: 'Every 4 to 6 words a red meteor appears with a short word of 3 or 4 letters. It falls fast and bounces off the sides three times. Letting one through never costs a life, but it takes 2 to 3 points off your score.',
   },
   {
     heading: 'GOLDEN WORDS',
     tone: 'gold',
-    body: 'Every 8 to 10 words a glowing gold meteor appears with a long expert word. It falls slowly, and finishing one pays a flat 25 points.',
+    body: 'Every 8 to 10 words a glowing gold meteor appears with a long word of 9 letters or more. It falls slowly, and finishing one pays a flat 25 points.',
   },
   {
     heading: 'SCORING & COMBOS',
@@ -50,7 +50,7 @@ const SECTIONS: readonly Section[] = [
   },
   {
     heading: 'DIFFICULTY',
-    body: 'The longer you survive, the faster and more frequent the meteors become, and longer, harder words start to appear. Short words fall faster; long words fall slower.',
+    body: 'The longer you survive, the faster and more frequent the meteors become, and longer words start to appear: 3 letters at first, then 4, 5, 6, 7 and 8. There are only three speeds: normal, danger (faster) and golden (slower). Word length never changes the speed.',
   },
   {
     heading: 'LEADERBOARDS',

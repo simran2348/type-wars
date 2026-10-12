@@ -9,7 +9,7 @@ export type RunProgress = {
 export type Difficulty = {
   spawnIntervalMs: number;
   maxActiveMeteors: number;
-  /** Seconds a 5-7 letter word takes to fall the full height. */
+  /** Seconds a normal meteor takes to fall the full height, whatever its word. */
   baseTravelSeconds: number;
   tierWeights: TierWeights;
 };
@@ -30,24 +30,13 @@ export const difficultyFor = ({
     maxActiveMeteors: Math.min(7, 1 + Math.floor(intensity / 1.5)),
     baseTravelSeconds: Math.max(4.8, 10 - 0.55 * intensity),
     tierWeights: {
+      // 3-letter words only at first; each longer length joins in turn.
       easy: Math.max(0.15, 1 - 0.2 * intensity),
-      medium: clamp(0.25 * intensity, 0, 1),
-      hard: clamp(0.2 * (intensity - 3), 0, 1),
-      expert: clamp(0.15 * (intensity - 6), 0, 0.8),
+      medium: clamp(0.3 * intensity, 0, 1),
+      hard: clamp(0.25 * (intensity - 1.5), 0, 1),
+      expert: clamp(0.2 * (intensity - 3), 0, 1),
+      master: clamp(0.18 * (intensity - 5), 0, 0.9),
+      legend: clamp(0.15 * (intensity - 7), 0, 0.8),
     },
   };
-};
-
-/**
- * Short words fall faster, long words slower, so every word stays fair to
- * type. Long words make up for it by scoring more.
- */
-export const travelSecondsFor = (
-  word: string,
-  difficulty: Difficulty
-): number => {
-  const length = word.length;
-  const factor =
-    length <= 4 ? 0.8 : length <= 7 ? 1 : length <= 11 ? 1.25 : 1.5;
-  return difficulty.baseTravelSeconds * factor;
 };
