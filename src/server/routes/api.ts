@@ -14,6 +14,7 @@ import {
   getLastScore,
   getLeaderboards,
   parseMode,
+  parseModeQuery,
   parseScore,
   recordLastScore,
   recordScore,
@@ -40,7 +41,7 @@ const JOURNEY_HEADER = 'x-devvit-journey-id';
 
 /**
  * Ends the run's journey with the server-validated score. A "win" is a new
- * all-time personal best. Analytics never block or fail score submission.
+ * all-time personal best on that level. Analytics never block or fail score submission.
  */
 const endRunJourney = async (
   journeyId: string | null,
@@ -64,18 +65,26 @@ const endRunJourney = async (
   }
 };
 
-/** Both leaderboards plus the viewer's Reddit username. */
+/** One level's two leaderboards (`?mode=`, ranked by default) plus the viewer's Reddit username. */
 api.get('/leaderboard', async (c) => {
+  const mode = parseModeQuery(c.req.query('mode'));
+  if (mode === null) {
+    return c.json<ErrorResponse>(
+      { status: 'error', message: 'Unknown level' },
+      400
+    );
+  }
   try {
     const username = (await reddit.getCurrentUsername()) ?? null;
-    const [leaderboards, lastScore] = await Promise.all([
-      getLeaderboards(),
+    const [leaderboards, lastRun] = await Promise.all([
+      getLeaderboards(mode),
       getLastScore(username),
     ]);
     return c.json<LeaderboardResponse>({
       username,
       isAdmin: isAdmin(username),
-      lastScore,
+      lastScore: lastRun?.score ?? null,
+      lastScoreMode: lastRun?.mode ?? null,
       leaderboards,
     });
   } catch (error) {
@@ -113,15 +122,15 @@ api.post('/score', async (c) => {
 
   try {
     const username = (await reddit.getCurrentUsername()) ?? null;
-    // Only ranked runs go on the leaderboards; practice levels never do.
-    const recorded = username !== null && score > 0 && mode === 'ranked';
+    // Every level has its own leaderboards.
+    const recorded = username !== null && score > 0;
     const canComment =
       username !== null && score > 0 && context.postId !== undefined;
     if (username !== null) {
-      await recordLastScore(username, score);
+      await recordLastScore(username, { score, mode });
       await setPendingComment(username, canComment ? { score, mode } : null);
     }
-    const personalBest = recorded && (await recordScore(username, score));
+    const personalBest = recorded && (await recordScore(username, score, mode));
     await endRunJourney(
       parseJourneyId(c.req.header(JOURNEY_HEADER)),
       score,
@@ -134,7 +143,8 @@ api.post('/score', async (c) => {
       username,
       isAdmin: isAdmin(username),
       lastScore: username === null ? null : score,
-      leaderboards: await getLeaderboards(),
+      lastScoreMode: username === null ? null : mode,
+      leaderboards: await getLeaderboards(mode),
     });
   } catch (error) {
     console.error('Score submission failed:', error);

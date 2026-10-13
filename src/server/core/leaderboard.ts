@@ -14,14 +14,22 @@ import {
  * made every sorted-set call fail with WRONGTYPE.
  */
 const KEY_PREFIX = 'type-wars:scores';
-const ALL_TIME_KEY = `${KEY_PREFIX}:all-time`;
 const DAILY_TTL_SECONDS = 60 * 60 * 24 * 3;
 
-/** Daily boundaries are UTC, derived from server time only. */
-const dailyKey = (now: Date): string =>
-  `${KEY_PREFIX}:daily:${now.toISOString().slice(0, 10)}`;
+/**
+ * Every level has its own pair of boards. Ranked keeps the original key
+ * names, so scores saved before levels existed stay on the ranked boards.
+ */
+const boardPrefix = (mode: GameMode): string =>
+  mode === 'ranked' ? KEY_PREFIX : `${KEY_PREFIX}:${mode}`;
 
-/** Hash of username -> score of their most recent game. */
+const allTimeKey = (mode: GameMode): string => `${boardPrefix(mode)}:all-time`;
+
+/** Daily boundaries are UTC, derived from server time only. */
+const dailyKey = (mode: GameMode, now: Date): string =>
+  `${boardPrefix(mode)}:daily:${now.toISOString().slice(0, 10)}`;
+
+/** Hash of username -> their most recent game, as `score:mode`. */
 const LAST_SCORE_KEY = `${KEY_PREFIX}:last`;
 
 /** Hash of username -> finished-run score they may still post as a comment. */
@@ -74,6 +82,10 @@ export const parseMode = (body: unknown): GameMode | null => {
   return isGameMode(body.mode) ? body.mode : null;
 };
 
+/** The level named in a `?mode=` query; none means ranked, unknown is null. */
+export const parseModeQuery = (value: string | undefined): GameMode | null =>
+  value === undefined ? 'ranked' : isGameMode(value) ? value : null;
+
 const recordOnBoard = async (
   key: string,
   username: string,
@@ -104,16 +116,20 @@ const recordOnBoard = async (
   return true;
 };
 
-/** Records a run on both boards; resolves true if it is a new all-time personal best. */
+/**
+ * Records a run on its level's two boards; resolves true if it is a new
+ * all-time personal best on that level.
+ */
 export const recordScore = async (
   username: string,
-  score: number
+  score: number,
+  mode: GameMode
 ): Promise<boolean> => {
   const now = new Date();
-  const today = dailyKey(now);
+  const today = dailyKey(mode, now);
 
   const [personalBest] = await Promise.all([
-    recordOnBoard(ALL_TIME_KEY, username, score, now),
+    recordOnBoard(allTimeKey(mode), username, score, now),
     recordOnBoard(today, username, score, now),
   ]);
   await Promise.all([
@@ -134,25 +150,34 @@ const topEntries = async (key: string): Promise<LeaderboardEntry[]> => {
   return rows.map(({ member, score }) => ({ username: member, score }));
 };
 
-/** Remembers a player's most recent score, whether or not it's a best. */
-export const recordLastScore = async (
-  username: string,
-  score: number
-): Promise<void> => {
-  await redis.hSet(LAST_SCORE_KEY, { [username]: String(score) });
+export type FinishedRun = { score: number; mode: GameMode };
+
+/** Runs are stored as `score:mode`; values from before levels hold only a score. */
+const encodeRun = ({ score, mode }: FinishedRun): string => `${score}:${mode}`;
+
+const decodeRun = (value: string): FinishedRun => {
+  const [score, mode] = value.split(':');
+  return { score: Number(score), mode: isGameMode(mode) ? mode : 'ranked' };
 };
 
+/** Remembers a player's most recent run, whether or not it's a best. */
+export const recordLastScore = async (
+  username: string,
+  run: FinishedRun
+): Promise<void> => {
+  await redis.hSet(LAST_SCORE_KEY, { [username]: encodeRun(run) });
+};
+
+/** The player's most recent score and the level it was played on. */
 export const getLastScore = async (
   username: string | null
-): Promise<number | null> => {
+): Promise<FinishedRun | null> => {
   if (username === null) {
     return null;
   }
   const value = await redis.hGet(LAST_SCORE_KEY, username);
-  return value === undefined ? null : Number(value);
+  return value === undefined ? null : decodeRun(value);
 };
-
-export type FinishedRun = { score: number; mode: GameMode };
 
 /**
  * Marks the run just finished as commentable (or clears the mark with null),
@@ -165,9 +190,7 @@ export const setPendingComment = async (
   if (run === null) {
     await redis.hDel(COMMENT_PENDING_KEY, [username]);
   } else {
-    await redis.hSet(COMMENT_PENDING_KEY, {
-      [username]: `${run.score}:${run.mode}`,
-    });
+    await redis.hSet(COMMENT_PENDING_KEY, { [username]: encodeRun(run) });
   }
 };
 
@@ -180,18 +203,22 @@ export const takePendingComment = async (
     return null;
   }
   await redis.hDel(COMMENT_PENDING_KEY, [username]);
-  const [score, mode] = value.split(':');
-  // Entries saved before levels existed hold only the score.
-  return { score: Number(score), mode: isGameMode(mode) ? mode : 'ranked' };
+  return decodeRun(value);
 };
 
-/** Deletes every leaderboard (all-time plus each daily board still alive) and last scores. */
+/**
+ * Deletes every level's leaderboards (all-time plus each daily board still
+ * alive) and last scores.
+ */
 export const resetScores = async (): Promise<void> => {
   const now = Date.now();
   const days = Math.ceil(DAILY_TTL_SECONDS / (60 * 60 * 24));
-  const boards = [ALL_TIME_KEY];
-  for (let back = -1; back <= days; back++) {
-    boards.push(dailyKey(new Date(now - back * 24 * 60 * 60 * 1000)));
+  const boards: string[] = [];
+  for (const mode of GAME_MODES) {
+    boards.push(allTimeKey(mode));
+    for (let back = -1; back <= days; back++) {
+      boards.push(dailyKey(mode, new Date(now - back * 24 * 60 * 60 * 1000)));
+    }
   }
   await redis.del(
     LAST_SCORE_KEY,
@@ -200,10 +227,12 @@ export const resetScores = async (): Promise<void> => {
   );
 };
 
-export const getLeaderboards = async (): Promise<Leaderboards> => {
+export const getLeaderboards = async (
+  mode: GameMode
+): Promise<Leaderboards> => {
   const [today, allTime] = await Promise.all([
-    topEntries(dailyKey(new Date())),
-    topEntries(ALL_TIME_KEY),
+    topEntries(dailyKey(mode, new Date())),
+    topEntries(allTimeKey(mode)),
   ]);
   return { today, allTime };
 };

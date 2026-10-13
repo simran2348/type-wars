@@ -1,10 +1,13 @@
 import { requestExpandedMode } from '@devvit/web/client';
 import {
+  GAME_MODES,
   LEADERBOARD_SIZE,
+  type GameMode,
   type LeaderboardEntry,
   type LeaderboardResponse,
 } from '../shared/api';
 import { fetchLeaderboards } from './api';
+import { DEFAULT_MODE, MODES } from './modes';
 import { setupAdmin } from './splashAdmin';
 
 const STARS_PER_PIXEL = 1 / 900;
@@ -82,7 +85,11 @@ const renderBoard = (
   );
 };
 
-const renderLastScore = ({ username, lastScore }: LeaderboardResponse) => {
+const renderLastScore = ({
+  username,
+  lastScore,
+  lastScoreMode,
+}: LeaderboardResponse) => {
   const target = element('last-score');
   if (!target) {
     return;
@@ -92,16 +99,22 @@ const renderLastScore = ({ username, lastScore }: LeaderboardResponse) => {
       ? 'Log in to track your score'
       : lastScore === null
         ? 'No games yet'
-        : lastScore.toLocaleString('en-US');
+        : `${lastScore.toLocaleString('en-US')}${lastScoreMode ? ` · ${MODES[lastScoreMode].label}` : ''}`;
 };
 
 let adminReady = false;
+/** The level whose boards are shown; guards against stale responses. */
+let viewing: GameMode = DEFAULT_MODE;
 
 const loadBoards = async (): Promise<void> => {
+  const mode = viewing;
   const today = element('board-today');
   const allTime = element('board-all-time');
   try {
-    const response = await fetchLeaderboards();
+    const response = await fetchLeaderboards(mode);
+    if (mode !== viewing) {
+      return;
+    }
     renderBoard(today, response.leaderboards.today, response.username);
     renderBoard(allTime, response.leaderboards.allTime, response.username);
     renderLastScore(response);
@@ -111,9 +124,41 @@ const loadBoards = async (): Promise<void> => {
     }
   } catch (error) {
     console.error(error);
-    today?.replaceChildren(messageRow('Unavailable'));
-    allTime?.replaceChildren(messageRow('Unavailable'));
+    if (mode === viewing) {
+      today?.replaceChildren(messageRow('Unavailable'));
+      allTime?.replaceChildren(messageRow('Unavailable'));
+    }
   }
+};
+
+/** One tab per level; picking one reloads the boards for that level. */
+const setupLevelTabs = (): void => {
+  const container = element('level-tabs');
+  if (!container) {
+    return;
+  }
+  const tabs = GAME_MODES.map((mode) => {
+    const tab = document.createElement('button');
+    tab.type = 'button';
+    tab.className = 'level-tab';
+    tab.textContent = MODES[mode].label;
+    tab.setAttribute('role', 'tab');
+    tab.setAttribute('aria-selected', String(mode === viewing));
+    tab.addEventListener('click', () => {
+      if (mode === viewing) {
+        return;
+      }
+      viewing = mode;
+      tabs.forEach((other) =>
+        other.setAttribute('aria-selected', String(other === tab))
+      );
+      element('board-today')?.replaceChildren(messageRow('Loading…'));
+      element('board-all-time')?.replaceChildren(messageRow('Loading…'));
+      void loadBoards();
+    });
+    return tab;
+  });
+  container.replaceChildren(...tabs);
 };
 
 /** Swaps between the home and leaderboard screens inside the feed card. */
@@ -141,5 +186,6 @@ if (stars instanceof HTMLCanvasElement) {
   drawStars(stars);
   window.addEventListener('resize', () => drawStars(stars));
 }
+setupLevelTabs();
 // Loads up front too, so the admin panel can appear on the home screen.
 void loadBoards();

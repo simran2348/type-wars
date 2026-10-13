@@ -46,7 +46,7 @@ const SECTIONS: readonly Section[] = [
   },
   {
     heading: 'LEVELS',
-    body: 'Pick a level when you press PLAY. EASY has normal meteors only. MEDIUM adds red danger meteors. HARD adds golden meteors too. RANKED is the full game, and it is the only level whose scores go on the leaderboards.',
+    body: 'Pick a level when you press PLAY. EASY has normal meteors only. MEDIUM adds red danger meteors. HARD adds golden meteors too. RANKED is the full game. Every level has its own leaderboards.',
   },
   {
     heading: 'SCORING & COMBOS',
@@ -58,7 +58,7 @@ const SECTIONS: readonly Section[] = [
   },
   {
     heading: 'LEADERBOARDS',
-    body: "Your best RANKED score is saved under your Reddit username on Today's Best (resets at midnight UTC) and All Time.",
+    body: "Your best score on each level is saved under your Reddit username on that level's Today's Best (resets at midnight UTC) and All Time boards. Use the level tabs on any leaderboard to switch between them.",
   },
   {
     heading: 'ON PHONES & TABLETS',

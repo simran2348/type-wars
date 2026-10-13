@@ -97,6 +97,35 @@ body {
   -webkit-text-stroke: 1.5px #ffe81f;
 }
 
+/* Level picker above the boards. */
+.level-tabs {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+  width: min(560px, 100%);
+  flex: none;
+}
+
+.level-tab {
+  padding: 7px 2px;
+  border: 1.5px solid rgba(255, 232, 31, 0.6);
+  border-radius: 6px;
+  background: rgba(6, 7, 11, 0.85);
+  color: #ffe81f;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.7rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.level-tab[aria-selected='true'] {
+  border-color: #ffe81f;
+  background: #ffe81f;
+  color: #000000;
+}
+
 .last-score {
   display: flex;
   align-items: baseline;

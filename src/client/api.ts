@@ -17,7 +17,7 @@ const request = async <T>(path: string, init?: RequestInit): Promise<T> => {
 };
 
 /**
- * Submits the final score; the server responds with both leaderboards.
+ * Submits the final score; the server responds with that level's leaderboards.
  * `headers` carries the run's analytics journey id, if any.
  */
 export const submitScore = (
@@ -33,8 +33,10 @@ export const submitScore = (
   });
 };
 
-export const fetchLeaderboards = (): Promise<LeaderboardResponse> =>
-  request('/api/leaderboard');
+/** One level's Today's Best and All Time boards. */
+export const fetchLeaderboards = (
+  mode: GameMode = 'ranked'
+): Promise<LeaderboardResponse> => request(`/api/leaderboard?mode=${mode}`);
 
 /** Posts the just-finished run's score as a comment from the player's account. */
 export const commentScore = (): Promise<CommentScoreResponse> =>

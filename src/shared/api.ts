@@ -4,8 +4,8 @@ export const LEADERBOARD_SIZE = 10;
 export const MAX_SCORE = 200_000;
 
 /**
- * Levels. Easy, medium and hard are practice levels that differ in which
- * meteor types appear; only ranked runs go on the leaderboards.
+ * Levels differ in which meteor types appear. Each one has its own Today's
+ * Best and All Time leaderboards.
  */
 export const GAME_MODES = ['easy', 'medium', 'hard', 'ranked'] as const;
 export type GameMode = (typeof GAME_MODES)[number];
@@ -32,6 +32,8 @@ export type LeaderboardResponse = {
   isAdmin: boolean;
   /** The viewer's most recent score, or null if logged out or never played. */
   lastScore: number | null;
+  /** The level that last score was played on; null whenever lastScore is. */
+  lastScoreMode: GameMode | null;
   leaderboards: Leaderboards;
 };
 
@@ -40,7 +42,7 @@ export type ResetScoresResponse = {
 };
 
 export type SubmitScoreResponse = LeaderboardResponse & {
-  /** True when the score went on the leaderboards: ranked, logged in, above zero. */
+  /** True when the score went on its level's leaderboards: logged in, above zero. */
   recorded: boolean;
   /** True when the player may post this run's score as a comment. */
   canComment: boolean;

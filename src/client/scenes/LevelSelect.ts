@@ -1,12 +1,11 @@
 import { GAME_MODES, type GameMode } from '../../shared/api';
-import { MODES, type RunOptions } from '../modes';
-import { CSS, FONTS } from '../theme';
+import { DEFAULT_MODE, MODES, type RunOptions } from '../modes';
 import { Button } from '../ui/Button';
 import { MenuScene } from '../ui/MenuScene';
-import { addText, addTitle } from '../ui/text';
+import { addTitle } from '../ui/text';
 
-const FIRST_ROW = 150;
-const ROW_SPACING = 96;
+const FIRST_ROW = 130;
+const ROW_SPACING = 74;
 
 /** Shown after PLAY: the player picks a level before every first run. */
 export class LevelSelect extends MenuScene {
@@ -20,31 +19,23 @@ export class LevelSelect extends MenuScene {
 
   protected build() {
     const cx = this.designWidth / 2;
-    const rows = GAME_MODES.flatMap((mode, i) => {
-      const y = FIRST_ROW + i * ROW_SPACING;
-      const { label, description, ranked } = MODES[mode];
-      return [
-        new Button(this, cx, y, label, () => this.play(mode), {
-          width: 380,
-          height: 54,
-          variant: ranked ? 'primary' : 'secondary',
-        }),
-        addText(this, cx, y + 42, description, {
-          fontFamily: FONTS.body,
-          fontSize: '18px',
-          color: CSS.muted,
-        }).setOrigin(0.5),
-      ];
-    });
-
     return [
       addTitle(this, cx, 44, 'CHOOSE LEVEL', 40, this.designWidth - 48),
-      addText(this, cx, 92, 'Only RANKED scores count on the leaderboards', {
-        fontFamily: FONTS.body,
-        fontSize: '18px',
-        color: CSS.saber,
-      }).setOrigin(0.5),
-      ...rows,
+      ...GAME_MODES.map(
+        (mode, i) =>
+          new Button(
+            this,
+            cx,
+            FIRST_ROW + i * ROW_SPACING,
+            MODES[mode].label,
+            () => this.play(mode),
+            {
+              width: 380,
+              height: 54,
+              variant: mode === DEFAULT_MODE ? 'primary' : 'secondary',
+            }
+          )
+      ),
       new Button(this, cx, this.designHeight - 30, 'BACK', () => this.back(), {
         width: 200,
         height: 46,
@@ -59,7 +50,7 @@ export class LevelSelect extends MenuScene {
     if (byNumber) {
       this.play(byNumber);
     } else if (event.key === 'Enter') {
-      this.play('ranked');
+      this.play(DEFAULT_MODE);
     } else if (event.key === 'Escape' || event.key === 'Backspace') {
       this.back();
     }

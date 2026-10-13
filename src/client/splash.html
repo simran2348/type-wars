@@ -22,7 +22,10 @@
       hidden
     >
       <h2>Admin</h2>
-      <p>Permanently deletes every score on Today's Best and All Time.</p>
+      <p>
+        Permanently deletes every score on Today's Best and All Time, for every
+        level.
+      </p>
       <button class="admin-reset" id="admin-reset" type="button">
         Reset all scores
       </button>
@@ -39,6 +42,12 @@
     </main>
     <main class="screen" id="leaderboard-screen" hidden>
       <h1 class="screen-title">Leaderboards</h1>
+      <div
+        class="level-tabs"
+        id="level-tabs"
+        role="tablist"
+        aria-label="Level"
+      ></div>
       <section class="boards" aria-label="Leaderboards">
         <div class="board">
           <h2>Today's Best</h2>

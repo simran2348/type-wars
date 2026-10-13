@@ -5,7 +5,7 @@ A fast typing space shooter for Reddit, built with [Devvit Web](https://develope
 Meteors fall toward your ship, each carrying a word. Every correct letter fires a blaster bolt; finish the word to destroy the meteor. Let three through and it's game over.
 
 - **Scoring:** 1 point per letter, with combo multipliers (×2 at 5 in a row, ×3 at 10, ×4 at 20).
-- **Levels:** Easy (normal meteors), Medium (adds danger), Hard (adds golden) and Ranked (the full game; the only level on the leaderboards).
+- **Levels:** Easy (normal meteors), Medium (adds danger), Hard (adds golden) and Ranked (the full game). Each level has its own leaderboards.
 - **Leaderboards:** Today's Best (UTC) and All Time, top 10 by Reddit username.
 - **Mobile:** an on-screen letter pad appears below the ship on touch devices.
 - **Admin:** the configured admin can reset all scores from the splash screen.

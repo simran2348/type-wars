@@ -1,6 +1,7 @@
 import type * as Phaser from 'phaser';
 import { finishRun } from '../analytics';
-import { commentScore, submitScore } from '../api';
+import type { GameMode } from '../../shared/api';
+import { commentScore, fetchLeaderboards, submitScore } from '../api';
 import { MODES, type RunOptions } from '../modes';
 import type { RunResult } from './Game';
 import { CSS, FONTS } from '../theme';
@@ -11,9 +12,11 @@ import {
   LeaderboardPanel,
 } from '../ui/LeaderboardPanel';
 import { MenuScene } from '../ui/MenuScene';
+import { MODE_TABS_HEIGHT, ModeTabs } from '../ui/ModeTabs';
 import { addText } from '../ui/text';
 
-const PANEL_TOP = 214;
+const TABS_TOP = 200;
+const PANEL_TOP = TABS_TOP + MODE_TABS_HEIGHT + 10;
 /** Ignore keys briefly so a keystroke from the last word can't skip the screen. */
 const ENTER_DELAY_MS = 800;
 
@@ -27,6 +30,9 @@ export class GameOver extends MenuScene {
   private commentButton: Button;
   private commentNote: Phaser.GameObjects.Text;
   private commenting: boolean;
+  /** The level whose boards are on screen; starts as the level just played. */
+  private viewing: GameMode;
+  private player: string | null;
 
   constructor() {
     super('GameOver');
@@ -53,6 +59,18 @@ export class GameOver extends MenuScene {
     const cx = this.designWidth / 2;
     const { score, destroyed, accuracy, bestCombo } = this.summary;
     const panel = new LeaderboardPanel(this, 20, PANEL_TOP);
+    this.viewing = this.summary.mode;
+    this.player = null;
+    // Hidden until the score is saved, so another level's board can't be
+    // requested before this run is on its own board.
+    const tabs = new ModeTabs(
+      this,
+      20,
+      TABS_TOP,
+      LEADERBOARD_PANEL_WIDTH,
+      this.viewing,
+      (mode) => void this.showLevel(panel, mode)
+    ).setVisible(false);
     const note = addText(
       this,
       cx,
@@ -76,7 +94,7 @@ export class GameOver extends MenuScene {
       fontSize: '20px',
       color: CSS.muted,
     }).setOrigin(0.5);
-    void this.submit(panel, note);
+    void this.submit(panel, note, tabs);
 
     return [
       addText(this, cx, 36, 'GAME OVER', {
@@ -113,6 +131,7 @@ export class GameOver extends MenuScene {
         `${destroyed} meteors  ·  ${accuracy}% accuracy  ·  best combo ${bestCombo}`,
         { fontFamily: FONTS.body, fontSize: '20px', color: CSS.muted }
       ).setOrigin(0.5),
+      tabs,
       panel,
       note,
       this.commentButton,
@@ -158,7 +177,8 @@ export class GameOver extends MenuScene {
 
   private async submit(
     panel: LeaderboardPanel,
-    note: Phaser.GameObjects.Text
+    note: Phaser.GameObjects.Text,
+    tabs: ModeTabs
   ): Promise<void> {
     try {
       const { leaderboards, username, recorded, canComment } =
@@ -167,10 +187,10 @@ export class GameOver extends MenuScene {
       if (!this.sys.isActive()) {
         return;
       }
+      this.player = username;
       panel.showBoards(leaderboards, username);
-      if (!MODES[this.summary.mode].ranked) {
-        note.setText('Practice level: play RANKED to get on the board.');
-      } else if (!recorded && username === null) {
+      tabs.setVisible(true);
+      if (!recorded && username === null) {
         note.setText('Log in to Reddit to save your scores.');
       }
       if (canComment) {
@@ -179,6 +199,27 @@ export class GameOver extends MenuScene {
     } catch (error) {
       console.error(error);
       if (this.sys.isActive()) {
+        panel.showMessage('Leaderboard unavailable');
+        tabs.setVisible(true);
+      }
+    }
+  }
+
+  /** Switches the panel to another level's boards. */
+  private async showLevel(
+    panel: LeaderboardPanel,
+    mode: GameMode
+  ): Promise<void> {
+    this.viewing = mode;
+    panel.showMessage('Loading…');
+    try {
+      const { leaderboards, username } = await fetchLeaderboards(mode);
+      if (this.sys.isActive() && mode === this.viewing) {
+        panel.showBoards(leaderboards, username ?? this.player);
+      }
+    } catch (error) {
+      console.error(error);
+      if (this.sys.isActive() && mode === this.viewing) {
         panel.showMessage('Leaderboard unavailable');
       }
     }

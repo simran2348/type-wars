@@ -2,46 +2,21 @@ import type { GameMode } from '../shared/api';
 
 export type ModeRules = {
   label: string;
-  /** One line shown under the level's button. */
-  description: string;
   /** Whether red danger meteors appear. */
   danger: boolean;
   /** Whether golden meteors appear. */
   golden: boolean;
-  /** Ranked runs are the only ones that go on the leaderboards. */
-  ranked: boolean;
 };
 
-/** Listed in the order they appear on the level select screen. */
+/**
+ * Easy has normal meteors only, medium adds danger, hard adds golden, and
+ * ranked is the full game. Each level has its own leaderboards.
+ */
 export const MODES: Record<GameMode, ModeRules> = {
-  easy: {
-    label: 'EASY',
-    description: 'Normal meteors only',
-    danger: false,
-    golden: false,
-    ranked: false,
-  },
-  medium: {
-    label: 'MEDIUM',
-    description: 'Normal and red danger meteors',
-    danger: true,
-    golden: false,
-    ranked: false,
-  },
-  hard: {
-    label: 'HARD',
-    description: 'Normal, danger and golden meteors',
-    danger: true,
-    golden: true,
-    ranked: false,
-  },
-  ranked: {
-    label: 'RANKED',
-    description: 'The full game. Scores go on the leaderboards',
-    danger: true,
-    golden: true,
-    ranked: true,
-  },
+  easy: { label: 'EASY', danger: false, golden: false },
+  medium: { label: 'MEDIUM', danger: true, golden: false },
+  hard: { label: 'HARD', danger: true, golden: true },
+  ranked: { label: 'RANKED', danger: true, golden: true },
 };
 
 export const DEFAULT_MODE: GameMode = 'ranked';
