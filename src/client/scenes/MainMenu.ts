@@ -35,7 +35,7 @@ export class MainMenu extends MenuScene {
       })
         .setOrigin(0.5)
         .setLetterSpacing(5),
-      new Button(this, cx, 250, 'PLAY', () => this.scene.start('Game')),
+      new Button(this, cx, 250, 'PLAY', () => this.scene.start('LevelSelect')),
       new Button(
         this,
         cx - 130,
@@ -57,7 +57,7 @@ export class MainMenu extends MenuScene {
 
   protected override onKey(event: KeyboardEvent) {
     if (event.key === 'Enter') {
-      this.scene.start('Game');
+      this.scene.start('LevelSelect');
     }
   }
 

@@ -45,6 +45,10 @@ const SECTIONS: readonly Section[] = [
     body: 'Every 8 to 10 words a glowing gold meteor appears with a long word of 9 letters or more. It falls slowly, and finishing one pays a flat 25 points.',
   },
   {
+    heading: 'LEVELS',
+    body: 'Pick a level when you press PLAY. EASY has normal meteors only. MEDIUM adds red danger meteors. HARD adds golden meteors too. RANKED is the full game, and it is the only level whose scores go on the leaderboards.',
+  },
+  {
     heading: 'SCORING & COMBOS',
     body: 'Each meteor is worth 1 point per letter, so a 3-letter word scores 3. Destroy meteors in a row to build a combo: 5 in a row doubles your points, 10 triples them and 20 quadruples them (golden words always pay 25).',
   },
@@ -54,7 +58,7 @@ const SECTIONS: readonly Section[] = [
   },
   {
     heading: 'LEADERBOARDS',
-    body: "Your best score is saved under your Reddit username on Today's Best (resets at midnight UTC) and All Time.",
+    body: "Your best RANKED score is saved under your Reddit username on Today's Best (resets at midnight UTC) and All Time.",
   },
   {
     heading: 'ON PHONES & TABLETS',
@@ -204,7 +208,7 @@ export class Instructions extends MenuScene {
     if (event.key === 'Escape' || event.key === 'Backspace') {
       this.scene.start('MainMenu');
     } else if (event.key === 'Enter') {
-      this.scene.start('Game');
+      this.scene.start('LevelSelect');
     } else if (event.key === 'ArrowDown') {
       this.scrollTo(this.scroll + SCROLL_STEP);
     } else if (event.key === 'ArrowUp') {
@@ -262,7 +266,7 @@ export class Instructions extends MenuScene {
   /** Button handler; ignores the tap that ends a drag-scroll over it. */
   private play() {
     if (!this.dragged) {
-      this.scene.start('Game');
+      this.scene.start('LevelSelect');
     }
   }
 }

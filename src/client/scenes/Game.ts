@@ -7,14 +7,16 @@ import {
   trackScore,
 } from '../analytics';
 import { Bullets } from '../entities/Bullets';
+import type { GameMode } from '../../shared/api';
 import type { Meteor } from '../entities/Meteor';
 import { Ship } from '../entities/Ship';
 import { letterKeyboard } from '../input/letterKeyboard';
+import { DEFAULT_MODE, MODES, type RunOptions } from '../modes';
 import { playfieldFor, type Playfield } from '../playfield';
 import { difficultyFor } from '../systems/Difficulty';
 import { Effects } from '../systems/Effects';
 import { MeteorSpawner } from '../systems/MeteorSpawner';
-import { ScoreSystem } from '../systems/ScoreSystem';
+import { ScoreSystem, type RunSummary } from '../systems/ScoreSystem';
 import { Sfx } from '../systems/Sfx';
 import { TypingSystem } from '../systems/TypingSystem';
 import { WordPicker } from '../systems/WordPicker';
@@ -30,8 +32,12 @@ const LETTER = /^[a-z]$/;
 
 type PlayState = 'playing' | 'gameOver';
 
+/** What the Game Over screen receives. */
+export type RunResult = RunSummary & { mode: GameMode };
+
 export class Game extends Scene {
   private state: PlayState;
+  private mode: GameMode = DEFAULT_MODE;
   private field: Playfield;
   private lives: number;
   private elapsedSeconds: number;
@@ -52,6 +58,11 @@ export class Game extends Scene {
     super('Game');
   }
 
+  /** PLAY AGAIN passes the same level back in. */
+  init(data: Partial<RunOptions>) {
+    this.mode = data.mode ?? DEFAULT_MODE;
+  }
+
   create() {
     // Every run starts from a clean slate; the scene instance is reused on restart.
     this.state = 'playing';
@@ -62,7 +73,7 @@ export class Game extends Scene {
     this.field = playfieldFor(view.width, view.height);
     this.score = new ScoreSystem();
     this.typing = new TypingSystem<Meteor>();
-    this.spawner = new MeteorSpawner(this, new WordPicker());
+    this.spawner = new MeteorSpawner(this, new WordPicker(), MODES[this.mode]);
     this.bullets = new Bullets(this);
     this.effects = new Effects(this);
     this.sfx = new Sfx(this.sound);
@@ -89,7 +100,7 @@ export class Game extends Scene {
     this.scale.on(Phaser.Scale.Events.RESIZE, this.layout, this);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, this.cleanup, this);
     // Every Game start is an explicit PLAY / PLAY AGAIN, i.e. a new journey.
-    startRun();
+    startRun(this.mode);
   }
 
   override update(_time: number, delta: number) {
@@ -277,7 +288,8 @@ export class Game extends Scene {
     this.sfx.gameOver();
 
     this.time.delayedCall(GAME_OVER_DELAY_MS, () => {
-      this.scene.launch('GameOver', this.score.summary());
+      const result: RunResult = { ...this.score.summary(), mode: this.mode };
+      this.scene.launch('GameOver', result);
     });
   }
 

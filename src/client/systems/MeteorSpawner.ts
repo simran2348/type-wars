@@ -9,7 +9,7 @@ import {
 import type { Playfield } from '../playfield';
 import type { NormalTier } from '../data/words';
 import type { Difficulty } from './Difficulty';
-import { SpecialScheduler } from './SpecialScheduler';
+import { SpecialScheduler, type SpecialKinds } from './SpecialScheduler';
 import type { WordPicker } from './WordPicker';
 
 /** Delay before the first meteor and when the screen is empty. */
@@ -70,12 +70,16 @@ export class MeteorSpawner {
   readonly meteors: Meteor[] = [];
   private readonly activeWords = new Set<string>();
   private sinceLastSpawnMs = 0;
-  private readonly specials = new SpecialScheduler();
+  private readonly specials: SpecialScheduler;
 
   constructor(
     private readonly scene: Phaser.Scene,
-    private readonly words: WordPicker
-  ) {}
+    private readonly words: WordPicker,
+    /** Which special meteors the current level allows. */
+    specialKinds: SpecialKinds
+  ) {
+    this.specials = new SpecialScheduler(specialKinds);
+  }
 
   update(deltaMs: number, difficulty: Difficulty, field: Playfield): void {
     this.sinceLastSpawnMs += deltaMs;

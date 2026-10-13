@@ -85,6 +85,6 @@ export class Leaderboard extends MenuScene {
   }
 
   private play() {
-    this.scene.start('Game');
+    this.scene.start('LevelSelect');
   }
 }

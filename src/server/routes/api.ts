@@ -4,6 +4,7 @@ import { telemetry } from '@devvit/analytics/server/reddit';
 import type {
   CommentScoreResponse,
   ErrorResponse,
+  GameMode,
   LeaderboardResponse,
   ResetScoresResponse,
   SubmitScoreResponse,
@@ -12,6 +13,7 @@ import { isAdmin } from '../core/admin';
 import {
   getLastScore,
   getLeaderboards,
+  parseMode,
   parseScore,
   recordLastScore,
   recordScore,
@@ -24,6 +26,14 @@ import { journeys, parseJourneyId } from './journeys';
 export const api = new Hono();
 
 api.route('/telemetry', journeys);
+
+/** How each level is named in a score comment. */
+const MODE_LABELS: Record<GameMode, string> = {
+  easy: 'Easy',
+  medium: 'Medium',
+  hard: 'Hard',
+  ranked: 'Ranked',
+};
 
 /** Header the client uses to pass its active Devvit Journeys id. */
 const JOURNEY_HEADER = 'x-devvit-journey-id';
@@ -93,7 +103,8 @@ api.post('/score', async (c) => {
   }
 
   const score = parseScore(body);
-  if (score === null) {
+  const mode = parseMode(body);
+  if (score === null || mode === null) {
     return c.json<ErrorResponse>(
       { status: 'error', message: 'Invalid score' },
       400
@@ -102,15 +113,15 @@ api.post('/score', async (c) => {
 
   try {
     const username = (await reddit.getCurrentUsername()) ?? null;
-    const recorded = username !== null && score > 0;
+    // Only ranked runs go on the leaderboards; practice levels never do.
+    const recorded = username !== null && score > 0 && mode === 'ranked';
+    const canComment =
+      username !== null && score > 0 && context.postId !== undefined;
     if (username !== null) {
       await recordLastScore(username, score);
+      await setPendingComment(username, canComment ? { score, mode } : null);
     }
     const personalBest = recorded && (await recordScore(username, score));
-    const canComment = recorded && context.postId !== undefined;
-    if (username !== null) {
-      await setPendingComment(username, canComment ? score : null);
-    }
     await endRunJourney(
       parseJourneyId(c.req.header(JOURNEY_HEADER)),
       score,
@@ -149,8 +160,8 @@ api.post('/score/comment', async (c) => {
     );
   }
 
-  const score = await takePendingComment(username);
-  if (score === null) {
+  const run = await takePendingComment(username);
+  if (run === null) {
     return c.json<ErrorResponse>(
       { status: 'error', message: 'No score to share' },
       409
@@ -160,14 +171,14 @@ api.post('/score/comment', async (c) => {
   try {
     await reddit.submitComment({
       id: postId,
-      text: `🚀 Scored **${score.toLocaleString('en-US')}** in Type Wars. Can you beat it?`,
+      text: `🚀 Scored **${run.score.toLocaleString('en-US')}** in Type Wars (${MODE_LABELS[run.mode]}). Can you beat it?`,
       runAs: 'USER',
     });
     return c.json<CommentScoreResponse>({ status: 'ok' });
   } catch (error) {
     console.error('Score comment failed:', error);
     // Give the player another try.
-    await setPendingComment(username, score);
+    await setPendingComment(username, run);
     return c.json<ErrorResponse>(
       { status: 'error', message: 'Could not post comment' },
       500

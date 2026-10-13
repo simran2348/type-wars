@@ -1,11 +1,12 @@
 import { createTelemetryClient } from '@devvit/analytics/client/reddit';
+import type { GameMode } from '../shared/api';
 
 /**
  * Devvit Journeys telemetry for the developer dashboard (Analytics tab).
  *
  * One run of the game is one journey:
  * - App.Ready: the game finished loading and the menu is interactive.
- * - Journey.Start: the player pressed PLAY or PLAY AGAIN.
+ * - Journey.Start: the player picked a level or pressed PLAY AGAIN.
  * - Journey.Progress: meteor milestones (10, 25, 50, 75, 100 destroyed).
  * - Journey.Interaction: golden/danger meteor destroyed, life lost, sound toggled.
  * - Journey.End: game over, ended server-side with the validated score
@@ -25,7 +26,11 @@ const MILESTONES = [10, 25, 50, 75, 100];
 const FINAL_MILESTONE = MILESTONES[MILESTONES.length - 1] ?? 1;
 
 export type RunInteraction =
-  'golden_destroyed' | 'danger_destroyed' | 'life_lost' | 'sound_toggled';
+  | 'level_selected'
+  | 'golden_destroyed'
+  | 'danger_destroyed'
+  | 'life_lost'
+  | 'sound_toggled';
 
 type Receipted = { receipt: { status: string; message: string } };
 
@@ -57,15 +62,20 @@ export const appReady = (): void => {
   }
 };
 
-/** A new run began from an explicit PLAY / PLAY AGAIN. */
-export const startRun = (): void => {
+/** A new run began from an explicit level pick or PLAY AGAIN. */
+export const startRun = (mode: GameMode): void => {
   // A journey left over from an earlier run is closed before a fresh one.
   if (telemetry.getActiveJourneyId() !== undefined) {
     telemetry.clearJourneyId();
   }
   runActive = true;
   lastScore = 0;
-  send(() => telemetry.startJourney());
+  send(async () => {
+    const started = await telemetry.startJourney();
+    // Sent once the journey exists, so the level is attached to this run.
+    trackInteraction('level_selected', mode);
+    return started;
+  });
 };
 
 export const trackScore = (score: number): void => {

@@ -1,7 +1,9 @@
 import { redis } from '@devvit/web/server';
 import {
+  GAME_MODES,
   LEADERBOARD_SIZE,
   MAX_SCORE,
+  type GameMode,
   type LeaderboardEntry,
   type Leaderboards,
 } from '../../shared/api';
@@ -61,6 +63,17 @@ export const parseScore = (body: unknown): number | null => {
  * Records a player's score on one board, keeping only their personal best,
  * then trims the board to the top entries.
  */
+const isGameMode = (value: unknown): value is GameMode =>
+  GAME_MODES.some((mode) => mode === value);
+
+/** The run's level. Clients from before levels existed send none: ranked. */
+export const parseMode = (body: unknown): GameMode | null => {
+  if (typeof body !== 'object' || body === null || !('mode' in body)) {
+    return 'ranked';
+  }
+  return isGameMode(body.mode) ? body.mode : null;
+};
+
 const recordOnBoard = async (
   key: string,
   username: string,
@@ -139,31 +152,37 @@ export const getLastScore = async (
   return value === undefined ? null : Number(value);
 };
 
+export type FinishedRun = { score: number; mode: GameMode };
+
 /**
  * Marks the run just finished as commentable (or clears the mark with null),
  * so each run can be shared at most once and only with its real score.
  */
 export const setPendingComment = async (
   username: string,
-  score: number | null
+  run: FinishedRun | null
 ): Promise<void> => {
-  if (score === null) {
+  if (run === null) {
     await redis.hDel(COMMENT_PENDING_KEY, [username]);
   } else {
-    await redis.hSet(COMMENT_PENDING_KEY, { [username]: String(score) });
+    await redis.hSet(COMMENT_PENDING_KEY, {
+      [username]: `${run.score}:${run.mode}`,
+    });
   }
 };
 
 /** Claims the player's commentable score, or null if there is none left. */
 export const takePendingComment = async (
   username: string
-): Promise<number | null> => {
+): Promise<FinishedRun | null> => {
   const value = await redis.hGet(COMMENT_PENDING_KEY, username);
   if (value === undefined) {
     return null;
   }
   await redis.hDel(COMMENT_PENDING_KEY, [username]);
-  return Number(value);
+  const [score, mode] = value.split(':');
+  // Entries saved before levels existed hold only the score.
+  return { score: Number(score), mode: isGameMode(mode) ? mode : 'ranked' };
 };
 
 /** Deletes every leaderboard (all-time plus each daily board still alive) and last scores. */

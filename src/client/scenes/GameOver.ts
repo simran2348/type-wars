@@ -1,7 +1,8 @@
 import type * as Phaser from 'phaser';
 import { finishRun } from '../analytics';
 import { commentScore, submitScore } from '../api';
-import type { RunSummary } from '../systems/ScoreSystem';
+import { MODES, type RunOptions } from '../modes';
+import type { RunResult } from './Game';
 import { CSS, FONTS } from '../theme';
 import { Button } from '../ui/Button';
 import {
@@ -20,7 +21,7 @@ const ENTER_DELAY_MS = 800;
 export class GameOver extends MenuScene {
   protected readonly designWidth = LEADERBOARD_PANEL_WIDTH + 40;
   protected readonly designHeight = PANEL_TOP + LEADERBOARD_PANEL_HEIGHT + 194;
-  private summary: RunSummary;
+  private summary: RunResult;
   private shade: Phaser.GameObjects.Rectangle;
   private shownAt: number;
   private commentButton: Button;
@@ -31,7 +32,7 @@ export class GameOver extends MenuScene {
     super('GameOver');
   }
 
-  init(data: RunSummary) {
+  init(data: RunResult) {
     this.summary = data;
   }
 
@@ -86,12 +87,18 @@ export class GameOver extends MenuScene {
       })
         .setOrigin(0.5)
         .setLetterSpacing(5),
-      addText(this, cx, 90, 'FINAL SCORE', {
-        fontFamily: FONTS.display,
-        fontSize: '14px',
-        fontStyle: '700',
-        color: CSS.muted,
-      })
+      addText(
+        this,
+        cx,
+        90,
+        `FINAL SCORE  ·  ${MODES[this.summary.mode].label}`,
+        {
+          fontFamily: FONTS.display,
+          fontSize: '14px',
+          fontStyle: '700',
+          color: CSS.muted,
+        }
+      )
         .setOrigin(0.5)
         .setLetterSpacing(3),
       addText(this, cx, 126, score.toLocaleString('en-US'), {
@@ -155,13 +162,15 @@ export class GameOver extends MenuScene {
   ): Promise<void> {
     try {
       const { leaderboards, username, recorded, canComment } =
-        await submitScore(this.summary.score, finishRun());
+        await submitScore(this.summary.score, this.summary.mode, finishRun());
       // The player may already have pressed PLAY AGAIN.
       if (!this.sys.isActive()) {
         return;
       }
       panel.showBoards(leaderboards, username);
-      if (!recorded && username === null) {
+      if (!MODES[this.summary.mode].ranked) {
+        note.setText('Practice level: play RANKED to get on the board.');
+      } else if (!recorded && username === null) {
         note.setText('Log in to Reddit to save your scores.');
       }
       if (canComment) {
@@ -206,6 +215,7 @@ export class GameOver extends MenuScene {
 
   private playAgain() {
     // Restarts the Game scene cleanly and closes this overlay.
-    this.scene.start('Game');
+    const options: RunOptions = { mode: this.summary.mode };
+    this.scene.start('Game', options);
   }
 }

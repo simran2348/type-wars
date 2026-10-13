@@ -6,6 +6,7 @@ import { Game as MainGame } from './scenes/Game';
 import { GameOver } from './scenes/GameOver';
 import { Instructions } from './scenes/Instructions';
 import { Leaderboard } from './scenes/Leaderboard';
+import { LevelSelect } from './scenes/LevelSelect';
 import { MainMenu } from './scenes/MainMenu';
 import { pixelRatio } from './view';
 
@@ -39,6 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
       Boot,
       Background,
       MainMenu,
+      LevelSelect,
       Instructions,
       Leaderboard,
       MainGame,

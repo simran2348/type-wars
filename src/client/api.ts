@@ -1,5 +1,6 @@
 import type {
   CommentScoreResponse,
+  GameMode,
   LeaderboardResponse,
   ResetScoresResponse,
   SubmitScoreRequest,
@@ -21,9 +22,10 @@ const request = async <T>(path: string, init?: RequestInit): Promise<T> => {
  */
 export const submitScore = (
   score: number,
+  mode: GameMode,
   headers: Record<string, string> = {}
 ): Promise<SubmitScoreResponse> => {
-  const body: SubmitScoreRequest = { score };
+  const body: SubmitScoreRequest = { score, mode };
   return request('/api/score', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...headers },

@@ -46,23 +46,28 @@ class Cadence {
 /**
  * Decides whether the next meteor is normal, danger or golden. Only normal
  * words count toward either gap. If both are due at once, golden goes first
- * and danger follows on the next spawn.
+ * and danger follows on the next spawn. A level can switch either kind off.
  */
+export type SpecialKinds = { danger: boolean; golden: boolean };
+
 export class SpecialScheduler {
   private readonly danger: Cadence;
   private readonly golden: Cadence;
 
-  constructor(random: RandomSource = Math.random) {
+  constructor(
+    private readonly enabled: SpecialKinds = { danger: true, golden: true },
+    random: RandomSource = Math.random
+  ) {
     this.danger = new Cadence(DANGER_GAPS, random);
     this.golden = new Cadence(GOLDEN_GAPS, random);
   }
 
   /** The kind the next meteor should be; call `record` once it has spawned. */
   next(): MeteorKind {
-    if (this.golden.due) {
+    if (this.enabled.golden && this.golden.due) {
       return 'golden';
     }
-    return this.danger.due ? 'danger' : 'normal';
+    return this.enabled.danger && this.danger.due ? 'danger' : 'normal';
   }
 
   /** Records what actually spawned (a special can fall back to normal). */
