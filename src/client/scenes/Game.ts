@@ -116,7 +116,7 @@ export class Game extends Scene {
         destroyed: this.score.destroyed,
         score: this.score.score,
       },
-      MODES[this.mode].speedRamps
+      MODES[this.mode]
     );
     this.spawner.update(
       delta,

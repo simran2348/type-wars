@@ -8,6 +8,8 @@ export type ModeRules = {
   golden: boolean;
   /** Whether heart meteors appear to win back a lost life. */
   heart: boolean;
+  /** The most meteors on screen at once, reached late in a run. */
+  maxMeteors: number;
   /** Whether meteors fall faster as the run goes on; otherwise speed is constant. */
   speedRamps: boolean;
 };
@@ -15,7 +17,8 @@ export type ModeRules = {
 /**
  * Easy has normal meteors only, medium adds danger, hard adds golden, and
  * ranked is the full game, the only level where meteors speed up over time.
- * Easy to hard also get heart meteors that give a lost life back.
+ * Easy to hard also get heart meteors that give a lost life back, and each
+ * allows fewer meteors on screen than the next so the late game stays readable.
  * Each level has its own leaderboards.
  */
 export const MODES: Record<GameMode, ModeRules> = {
@@ -24,6 +27,7 @@ export const MODES: Record<GameMode, ModeRules> = {
     danger: false,
     golden: false,
     heart: true,
+    maxMeteors: 4,
     speedRamps: false,
   },
   medium: {
@@ -31,6 +35,7 @@ export const MODES: Record<GameMode, ModeRules> = {
     danger: true,
     golden: false,
     heart: true,
+    maxMeteors: 5,
     speedRamps: false,
   },
   hard: {
@@ -38,6 +43,7 @@ export const MODES: Record<GameMode, ModeRules> = {
     danger: true,
     golden: true,
     heart: true,
+    maxMeteors: 6,
     speedRamps: false,
   },
   ranked: {
@@ -45,6 +51,7 @@ export const MODES: Record<GameMode, ModeRules> = {
     danger: true,
     golden: true,
     heart: false,
+    maxMeteors: 7,
     speedRamps: true,
   },
 };

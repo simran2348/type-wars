@@ -1,6 +1,8 @@
 import * as Phaser from 'phaser';
 import { Meteor, type MeteorKind } from '../entities/Meteor';
 import {
+  LINE_END_MAX,
+  LINE_END_MIN,
   bouncePath,
   type BouncePath,
   type CurvePath,
@@ -55,12 +57,16 @@ const randomBounce = (startX: number): BouncePath =>
     Phaser.Math.FloatBetween(0.15, 0.85)
   );
 
-/** Normal and heart meteors fly straight at the ship from a random start. */
+/** Normal and heart meteors fly straight toward the ship area from a random start. */
 const pathFor = (kind: MeteorKind, startX: number): MeteorPath => {
   switch (kind) {
     case 'normal':
     case 'heart':
-      return { kind: 'line', startX };
+      return {
+        kind: 'line',
+        startX,
+        endX: Phaser.Math.FloatBetween(LINE_END_MIN, LINE_END_MAX),
+      };
     case 'danger':
       return randomBounce(startX);
     case 'golden':

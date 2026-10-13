@@ -21,21 +21,32 @@ const FASTEST_TRAVEL_SECONDS = 4.8;
 const clamp = (value: number, min: number, max: number): number =>
   Math.min(max, Math.max(min, value));
 
+/** The parts of a level's rules that shape difficulty. */
+export type DifficultyRules = {
+  /** Whether meteors fall faster as the run goes on. */
+  speedRamps: boolean;
+  /** The most meteors on screen at once. */
+  maxMeteors: number;
+};
+
+const FULL_GAME: DifficultyRules = { speedRamps: true, maxMeteors: 7 };
+
 /**
- * Spawn rate, meteor count and word length always ramp up with progress.
- * Meteor speed ramps only when `speedRamps` is set (ranked); otherwise every
- * meteor type keeps its starting speed for the whole run.
+ * Spawn rate, meteor count and word length always ramp up with progress; the
+ * meteor count stops at the level's limit. Meteor speed ramps only when
+ * `speedRamps` is set (ranked); otherwise every meteor type keeps its starting
+ * speed for the whole run.
  */
 export const difficultyFor = (
   { elapsedSeconds, destroyed, score }: RunProgress,
-  speedRamps = true
+  { speedRamps, maxMeteors }: DifficultyRules = FULL_GAME
 ): Difficulty => {
   // Grows steadily: 0 at the start, roughly 10 after ~2 minutes of good play.
   const intensity = elapsedSeconds / 25 + destroyed / 12 + score / 500;
 
   return {
     spawnIntervalMs: Math.max(800, 2600 - 200 * intensity),
-    maxActiveMeteors: Math.min(7, 1 + Math.floor(intensity / 1.5)),
+    maxActiveMeteors: Math.min(maxMeteors, 1 + Math.floor(intensity / 1.5)),
     baseTravelSeconds: speedRamps
       ? Math.max(
           FASTEST_TRAVEL_SECONDS,

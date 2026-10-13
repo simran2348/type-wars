@@ -4,14 +4,23 @@
  * with time, keeping the time to impact fair; only the sideways path varies.
  */
 
-/** Straight line from a random start to the ship; used by normal meteors. */
+/**
+ * Straight line from a random start to a spot near the ship; used by normal
+ * and heart meteors.
+ */
 export type LinePath = {
   kind: 'line';
   startX: number;
+  /** Where it meets the red line. Spread out so labels don't pile up on the ship. */
+  endX: number;
 };
 
-/** The ship sits at the centre of the lane. */
-export const SHIP_LANE_X = 0.5;
+/**
+ * Line paths end somewhere in this band of the lane. The ship sits at its
+ * centre (0.5), so meteors still clearly head for it.
+ */
+export const LINE_END_MIN = 1 / 3;
+export const LINE_END_MAX = 2 / 3;
 
 /** Random curve with a sideways sway; used by golden meteors. */
 export type CurvePath = {
@@ -67,7 +76,7 @@ export const bouncePath = (
 /** Lane fraction (0..1) at trip progress t (0..1). */
 export const laneX = (path: MeteorPath, t: number): number => {
   if (path.kind === 'line') {
-    return path.startX + (SHIP_LANE_X - path.startX) * t;
+    return path.startX + (path.endX - path.startX) * t;
   }
   if (path.kind === 'bounce') {
     // Travel in the positive direction from the mirrored start, then mirror back.

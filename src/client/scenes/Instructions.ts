@@ -15,59 +15,35 @@ type Section = {
 };
 
 const INTRO =
-  'Meteors are falling toward your starfighter. Each one carries a word. Type the word to blast the meteor out of the sky before it reaches you.';
+  'Meteors fall toward your ship, each with a word on it. Type the word to destroy the meteor before it crosses the red line.';
 
 const SECTIONS: readonly Section[] = [
   {
-    heading: 'TYPE TO SHOOT',
-    body: 'Just start typing. Every correct letter fires a blaster bolt, and finishing the word destroys the meteor. No aiming or clicking needed, and capital letters never matter.',
-  },
-  {
     heading: 'LOCKING ON',
-    body: 'Your first letter locks onto the most dangerous meteor whose word starts with it. A yellow reticle marks the target and typed letters turn yellow. Finish that word before starting the next.',
-  },
-  {
-    heading: 'MISTAKES',
-    body: 'A wrong letter does not advance the word and the target flashes red. Mistakes never cost a life, but they halve your combo.',
-  },
-  {
-    heading: 'LIVES',
-    body: 'You have 3 hearts, shown by your ship. Every normal or golden meteor that crosses the red line costs one and resets your combo. Lose all 3 and the game is over. Danger and golden meteors keep falling past the line, but once they cross it they can no longer be shot.',
+    body: 'The first letter you type picks a meteor that starts with it. Its word turns yellow as you type. Finish that word before starting another.',
   },
   {
     heading: 'DANGER WORDS',
     tone: 'violet',
-    body: 'Every 4 to 6 words a violet meteor appears with a short word of 3 or 4 letters. It falls fast and bounces off the sides three times. Letting one through never costs a life, but it takes 2 to 3 points off your score.',
+    body: 'Violet meteors are fast and bounce off the sides. Their words are short. If one gets past you, you lose 2 or 3 points, but no heart.',
   },
   {
     heading: 'GOLDEN WORDS',
     tone: 'gold',
-    body: 'Every 8 to 10 words a glowing gold meteor appears with a long word of 9 letters or more. It falls slowly, and finishing one pays a flat 25 points.',
+    body: 'Gold meteors are slow and carry long words. Finish one for 25 points. If one gets past you, you lose a heart.',
   },
   {
     heading: 'HEARTS',
     tone: 'danger',
-    body: 'On EASY, MEDIUM and HARD, a pulsing red heart with the word "heart" can appear while you are missing a heart. It falls as fast as a danger meteor. Type "heart" before it crosses the red line to win one heart back. Missing it costs nothing, and another one comes later. RANKED has no hearts to collect.',
+    body: 'You start with 3 hearts. On EASY, MEDIUM and HARD, a red heart sometimes falls after you lose one. Type "heart" to get a heart back. Missing it costs nothing.',
   },
   {
     heading: 'LEVELS',
-    body: 'Pick a level when you press PLAY. EASY has normal meteors only. MEDIUM adds violet danger meteors. HARD adds golden meteors too. RANKED is the full game, and the only level where meteors speed up as you play. EASY, MEDIUM and HARD also have hearts to collect. Every level has its own leaderboards.',
+    body: 'EASY: normal meteors only. MEDIUM: adds danger meteors. HARD: adds golden meteors. RANKED: the full game, where meteors keep getting faster and there are no hearts to collect. Each level has its own leaderboard.',
   },
   {
     heading: 'SCORING & COMBOS',
-    body: 'Each meteor is worth 1 point per letter, so a 3-letter word scores 3. Destroy meteors in a row to build a combo: 5 in a row doubles your points, 10 triples them and 20 quadruples them (golden words always pay 25).',
-  },
-  {
-    heading: 'DIFFICULTY',
-    body: 'The longer you survive, the more frequent the meteors become, and longer words start to appear: 3 letters at first, then 4, 5, 6, 7 and 8. There are three speeds: normal, danger (faster) and golden (slower). On EASY, MEDIUM and HARD those speeds stay the same all game; on RANKED all three get faster the longer you survive. Word length never changes the speed.',
-  },
-  {
-    heading: 'LEADERBOARDS',
-    body: "Your best score on each level is saved under your Reddit username on that level's Today's Best (resets at midnight UTC) and All Time boards. Use the level tabs on any leaderboard to switch between them.",
-  },
-  {
-    heading: 'ON PHONES & TABLETS',
-    body: 'A letter keyboard appears below your ship while you play. Tap the letters to shoot; a physical keyboard works too.',
+    body: 'You get 1 point per letter. Destroy meteors in a row to multiply your points: x2 at 5 in a row, x3 at 10 and x4 at 20. A wrong letter cuts your streak in half, and losing a heart resets it.',
   },
 ];
 
