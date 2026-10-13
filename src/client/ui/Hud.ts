@@ -41,12 +41,12 @@ export class Hud {
     // Orbitron's slashed zero reads like an icon, so numbers use the mono face.
     this.scoreText = addText(scene, MARGIN, MARGIN + 14, '0', {
       fontFamily: FONTS.mono,
-      fontSize: '34px',
+      fontSize: '25px',
       color: CSS.text,
     });
-    this.comboText = addText(scene, MARGIN, MARGIN + 56, '', {
+    this.comboText = addText(scene, MARGIN, MARGIN + 48, '', {
       fontFamily: FONTS.display,
-      fontSize: '16px',
+      fontSize: '12px',
       fontStyle: '700',
       color: CSS.accent,
     })

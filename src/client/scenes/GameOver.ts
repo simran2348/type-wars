@@ -70,9 +70,9 @@ export class GameOver extends MenuScene {
       () => void this.comment(),
       { width: 360, height: 46, variant: 'secondary' }
     ).setVisible(false);
-    this.commentNote = addText(this, cx, below + 96, '', {
+    this.commentNote = addText(this, cx, below + 98, '', {
       fontFamily: FONTS.body,
-      fontSize: '16px',
+      fontSize: '20px',
       color: CSS.muted,
     }).setOrigin(0.5);
     void this.submit(panel, note);
@@ -166,9 +166,6 @@ export class GameOver extends MenuScene {
       }
       if (canComment) {
         this.commentButton.setVisible(true);
-        this.commentNote.setText(
-          'Posts a comment on this post from your Reddit account'
-        );
       }
     } catch (error) {
       console.error(error);
