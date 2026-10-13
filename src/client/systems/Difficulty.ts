@@ -14,21 +14,34 @@ export type Difficulty = {
   tierWeights: TierWeights;
 };
 
+/** Fall time of a normal meteor at the start of a run, and for the whole run when speed doesn't ramp. */
+const START_TRAVEL_SECONDS = 10;
+const FASTEST_TRAVEL_SECONDS = 4.8;
+
 const clamp = (value: number, min: number, max: number): number =>
   Math.min(max, Math.max(min, value));
 
-export const difficultyFor = ({
-  elapsedSeconds,
-  destroyed,
-  score,
-}: RunProgress): Difficulty => {
+/**
+ * Spawn rate, meteor count and word length always ramp up with progress.
+ * Meteor speed ramps only when `speedRamps` is set (ranked); otherwise every
+ * meteor type keeps its starting speed for the whole run.
+ */
+export const difficultyFor = (
+  { elapsedSeconds, destroyed, score }: RunProgress,
+  speedRamps = true
+): Difficulty => {
   // Grows steadily: 0 at the start, roughly 10 after ~2 minutes of good play.
   const intensity = elapsedSeconds / 25 + destroyed / 12 + score / 500;
 
   return {
     spawnIntervalMs: Math.max(800, 2600 - 200 * intensity),
     maxActiveMeteors: Math.min(7, 1 + Math.floor(intensity / 1.5)),
-    baseTravelSeconds: Math.max(4.8, 10 - 0.55 * intensity),
+    baseTravelSeconds: speedRamps
+      ? Math.max(
+          FASTEST_TRAVEL_SECONDS,
+          START_TRAVEL_SECONDS - 0.55 * intensity
+        )
+      : START_TRAVEL_SECONDS,
     tierWeights: {
       // 3-letter words only at first; each longer length joins in turn.
       easy: Math.max(0.15, 1 - 0.2 * intensity),

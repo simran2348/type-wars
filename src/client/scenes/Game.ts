@@ -110,11 +110,14 @@ export class Game extends Scene {
     const dt = delta / 1000;
     this.elapsedSeconds += dt;
 
-    const difficulty = difficultyFor({
-      elapsedSeconds: this.elapsedSeconds,
-      destroyed: this.score.destroyed,
-      score: this.score.score,
-    });
+    const difficulty = difficultyFor(
+      {
+        elapsedSeconds: this.elapsedSeconds,
+        destroyed: this.score.destroyed,
+        score: this.score.score,
+      },
+      MODES[this.mode].speedRamps
+    );
     this.spawner.update(delta, difficulty, this.field);
 
     for (const meteor of [...this.spawner.meteors]) {

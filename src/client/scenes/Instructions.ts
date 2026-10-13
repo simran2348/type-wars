@@ -46,7 +46,7 @@ const SECTIONS: readonly Section[] = [
   },
   {
     heading: 'LEVELS',
-    body: 'Pick a level when you press PLAY. EASY has normal meteors only. MEDIUM adds red danger meteors. HARD adds golden meteors too. RANKED is the full game. Every level has its own leaderboards.',
+    body: 'Pick a level when you press PLAY. EASY has normal meteors only. MEDIUM adds red danger meteors. HARD adds golden meteors too. RANKED is the full game, and the only level where meteors speed up as you play. Every level has its own leaderboards.',
   },
   {
     heading: 'SCORING & COMBOS',
@@ -54,7 +54,7 @@ const SECTIONS: readonly Section[] = [
   },
   {
     heading: 'DIFFICULTY',
-    body: 'The longer you survive, the faster and more frequent the meteors become, and longer words start to appear: 3 letters at first, then 4, 5, 6, 7 and 8. There are only three speeds: normal, danger (faster) and golden (slower). Word length never changes the speed.',
+    body: 'The longer you survive, the more frequent the meteors become, and longer words start to appear: 3 letters at first, then 4, 5, 6, 7 and 8. There are three speeds: normal, danger (faster) and golden (slower). On EASY, MEDIUM and HARD those speeds stay the same all game; on RANKED all three get faster the longer you survive. Word length never changes the speed.',
   },
   {
     heading: 'LEADERBOARDS',
