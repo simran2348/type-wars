@@ -5,6 +5,8 @@ import type { RandomSource } from './WordPicker';
 export const DANGER_GAPS = [4, 5, 6] as const;
 /** Golden meteors arrive after this many normal words (never the same gap twice in a row). */
 export const GOLDEN_GAPS = [8, 9, 10] as const;
+/** Heart meteors arrive after this many normal words played while missing a life. */
+export const HEART_GAPS = [14, 15, 16] as const;
 
 /**
  * Counts normal words until a special meteor is due. Each new gap is drawn at
@@ -43,42 +45,60 @@ class Cadence {
   }
 }
 
-/**
- * Decides whether the next meteor is normal, danger or golden. Only normal
- * words count toward either gap. If both are due at once, golden goes first
- * and danger follows on the next spawn. A level can switch either kind off.
- */
-export type SpecialKinds = { danger: boolean; golden: boolean };
+/** Which special meteors a level allows. */
+export type SpecialKinds = { danger: boolean; golden: boolean; heart: boolean };
 
+/**
+ * Decides whether the next meteor is normal, danger, golden or heart. Only
+ * normal words count toward a gap. If several are due at once, golden goes
+ * first, then heart, then danger, one per spawn.
+ *
+ * Heart meteors only count down, and only appear, while the player is missing
+ * a life.
+ */
 export class SpecialScheduler {
   private readonly danger: Cadence;
   private readonly golden: Cadence;
+  private readonly heart: Cadence;
 
   constructor(
-    private readonly enabled: SpecialKinds = { danger: true, golden: true },
+    private readonly enabled: SpecialKinds = {
+      danger: true,
+      golden: true,
+      heart: false,
+    },
     random: RandomSource = Math.random
   ) {
     this.danger = new Cadence(DANGER_GAPS, random);
     this.golden = new Cadence(GOLDEN_GAPS, random);
+    this.heart = new Cadence(HEART_GAPS, random);
   }
 
   /** The kind the next meteor should be; call `record` once it has spawned. */
-  next(): MeteorKind {
+  next(missingLife = false): MeteorKind {
     if (this.enabled.golden && this.golden.due) {
       return 'golden';
+    }
+    if (this.enabled.heart && missingLife && this.heart.due) {
+      return 'heart';
     }
     return this.enabled.danger && this.danger.due ? 'danger' : 'normal';
   }
 
   /** Records what actually spawned (a special can fall back to normal). */
-  record(kind: MeteorKind): void {
+  record(kind: MeteorKind, missingLife = false): void {
     if (kind === 'golden') {
       this.golden.restart();
     } else if (kind === 'danger') {
       this.danger.restart();
+    } else if (kind === 'heart') {
+      this.heart.restart();
     } else {
       this.golden.countNormal();
       this.danger.countNormal();
+      if (missingLife) {
+        this.heart.countNormal();
+      }
     }
   }
 }

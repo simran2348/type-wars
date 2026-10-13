@@ -8,10 +8,15 @@ import { laneX, swayOffset, type MeteorPath } from './meteorPath';
 /** `passed`: crossed the red line and keeps falling, but can no longer be shot. */
 export type MeteorState = 'active' | 'destroyed' | 'missed' | 'passed';
 
-/** Normal meteors cost a life; danger ones cost points; golden ones pay a flat bonus. */
-export type MeteorKind = 'normal' | 'danger' | 'golden';
+/**
+ * Normal meteors cost a life; danger ones cost points; golden ones pay a flat
+ * bonus; heart ones give a life back.
+ */
+export type MeteorKind = 'normal' | 'danger' | 'golden' | 'heart';
 
 type KindStyle = {
+  /** Drawn in place of a rock, at this fraction of the usual size, and pulsing. */
+  icon?: { texture: string; size: number };
   /** Multiply tint for the rock, or null to keep its natural colour. */
   rockTint: number | null;
   wordColor: string;
@@ -27,7 +32,15 @@ const KIND_STYLES: Record<MeteorKind, KindStyle> = {
     glow: null,
   },
   danger: {
-    rockTint: 0xff7070,
+    rockTint: 0xc79bff,
+    wordColor: CSS.violet,
+    border: COLORS.violet,
+    glow: COLORS.violet,
+  },
+  // A pulsing heart instead of a rock, matching the hearts by the ship.
+  heart: {
+    icon: { texture: TEXTURES.heartLarge, size: 0.62 },
+    rockTint: null,
     wordColor: CSS.danger,
     border: COLORS.danger,
     glow: COLORS.danger,
@@ -48,6 +61,8 @@ export type MeteorConfig = {
   fontSize: number;
 };
 
+/** How far an icon is raised above the meteor's centre, as a fraction of its size. */
+const ICON_LIFT = 0.55;
 const LABEL_PADDING_X = 10;
 const LABEL_PADDING_Y = 6;
 
@@ -72,7 +87,9 @@ export class Meteor
   private readonly typedText: Phaser.GameObjects.Text;
   private readonly restText: Phaser.GameObjects.Text;
   private readonly charWidth: number;
-  private readonly spin = Phaser.Math.FloatBetween(-0.8, 0.8);
+  private readonly spin: number;
+  /** The rock's resting display size; hits make it bulge briefly. */
+  private readonly rockSize: number;
   private readonly sizeScale: number;
   private targeted = false;
   private incomingBullets = 0;
@@ -87,10 +104,30 @@ export class Meteor
     this.radius = (24 + Math.min(this.word.length, 14) * 1.5) * this.sizeScale;
     this.place(field, 0);
 
-    this.rock = scene.add
-      .image(0, 0, Phaser.Utils.Array.GetRandom([...TEXTURES.meteors]))
-      .setDisplaySize(this.radius * 2.3, this.radius * 2.3)
-      .setRotation(Phaser.Math.FloatBetween(0, Math.PI * 2));
+    const { icon } = this.style;
+    this.rockSize = this.radius * 2.3 * (icon?.size ?? 1);
+    this.spin = icon ? 0 : Phaser.Math.FloatBetween(-0.8, 0.8);
+    this.rock = scene.add.image(
+      0,
+      0,
+      icon?.texture ?? Phaser.Utils.Array.GetRandom([...TEXTURES.meteors])
+    );
+    // Icons keep their own proportions and stay upright; rocks tumble.
+    this.rock.setScale(this.rockSize / this.rock.width);
+    if (icon) {
+      // Sits above the word label so the whole icon stays visible.
+      this.rock.setY(-this.rockSize * ICON_LIFT);
+      scene.tweens.add({
+        targets: this.rock,
+        scale: this.rock.scale * 1.18,
+        duration: 420,
+        yoyo: true,
+        repeat: -1,
+        ease: 'Sine.easeInOut',
+      });
+    } else {
+      this.rock.setRotation(Phaser.Math.FloatBetween(0, Math.PI * 2));
+    }
     this.applyBaseTint();
     this.reticle = scene.add.graphics().setVisible(false);
     this.drawReticle();
@@ -202,13 +239,16 @@ export class Meteor
         this.applyBaseTint();
       }
     });
-    this.rock.setDisplaySize(this.radius * 2.45, this.radius * 2.45);
-    this.scene.tweens.add({
-      targets: this.rock,
-      displayWidth: this.radius * 2.3,
-      displayHeight: this.radius * 2.3,
-      duration: 100,
-    });
+    // Rocks bulge when hit; icons already pulse on their own.
+    if (!this.style.icon) {
+      this.rock.setDisplaySize(this.rockSize * 1.065, this.rockSize * 1.065);
+      this.scene.tweens.add({
+        targets: this.rock,
+        displayWidth: this.rockSize,
+        displayHeight: this.rockSize,
+        duration: 100,
+      });
+    }
     return this.status === 'destroyed' && this.incomingBullets === 0;
   }
 
@@ -286,9 +326,9 @@ export class Meteor
     if (this.style.glow === null) {
       return null;
     }
-    const size = this.radius * 3.4;
+    const size = this.radius * (this.style.icon ? 2.8 : 3.4);
     const glow = scene.add
-      .image(0, 0, TEXTURES.glow)
+      .image(0, this.rock.y, TEXTURES.glow)
       .setTint(this.style.glow)
       .setAlpha(0.35)
       .setDisplaySize(size, size)

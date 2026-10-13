@@ -1,10 +1,11 @@
-/** Star Wars inspired palette: crawl yellow, saber blue, Sith red. */
+/** Star Wars inspired palette: crawl yellow, saber blue, Sith red, danger violet. */
 export const COLORS = {
   accent: 0xffe81f,
   saber: 0x4bd5ee,
   danger: 0xff2b2b,
   bolt: 0x5dff6b,
   gold: 0xffa000,
+  violet: 0xb45cff,
   panel: 0x06070b,
   panelBorder: 0x2a2e38,
 } as const;
@@ -16,6 +17,8 @@ export const CSS = {
   saber: '#4bd5ee',
   danger: '#ff2b2b',
   gold: '#ffa000',
+  /** Lighter than the violet glow so danger words stay readable. */
+  violet: '#cfa0ff',
   black: '#000000',
 } as const;
 
@@ -40,6 +43,8 @@ export const FONT_FACES = [
 export const TEXTURES = {
   ship: 'ship',
   heart: 'heart',
+  /** Bigger painting of the heart, for heart meteors. */
+  heartLarge: 'heart-large',
   flame: 'flame',
   meteors: ['meteor-0', 'meteor-1', 'meteor-2'],
   bullet: 'bullet',

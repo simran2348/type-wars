@@ -5,7 +5,7 @@ import { fitToViewport } from '../ui/layout';
 import { MenuScene } from '../ui/MenuScene';
 import { addText, addTitle } from '../ui/text';
 
-type Tone = 'accent' | 'danger' | 'gold';
+type Tone = 'accent' | 'danger' | 'gold' | 'violet';
 
 type Section = {
   heading: string;
@@ -36,8 +36,8 @@ const SECTIONS: readonly Section[] = [
   },
   {
     heading: 'DANGER WORDS',
-    tone: 'danger',
-    body: 'Every 4 to 6 words a red meteor appears with a short word of 3 or 4 letters. It falls fast and bounces off the sides three times. Letting one through never costs a life, but it takes 2 to 3 points off your score.',
+    tone: 'violet',
+    body: 'Every 4 to 6 words a violet meteor appears with a short word of 3 or 4 letters. It falls fast and bounces off the sides three times. Letting one through never costs a life, but it takes 2 to 3 points off your score.',
   },
   {
     heading: 'GOLDEN WORDS',
@@ -45,8 +45,13 @@ const SECTIONS: readonly Section[] = [
     body: 'Every 8 to 10 words a glowing gold meteor appears with a long word of 9 letters or more. It falls slowly, and finishing one pays a flat 25 points.',
   },
   {
+    heading: 'HEARTS',
+    tone: 'danger',
+    body: 'On EASY, MEDIUM and HARD, a pulsing red heart with the word "heart" can appear while you are missing a heart. It falls as fast as a danger meteor. Type "heart" before it crosses the red line to win one heart back. Missing it costs nothing, and another one comes later. RANKED has no hearts to collect.',
+  },
+  {
     heading: 'LEVELS',
-    body: 'Pick a level when you press PLAY. EASY has normal meteors only. MEDIUM adds red danger meteors. HARD adds golden meteors too. RANKED is the full game, and the only level where meteors speed up as you play. Every level has its own leaderboards.',
+    body: 'Pick a level when you press PLAY. EASY has normal meteors only. MEDIUM adds violet danger meteors. HARD adds golden meteors too. RANKED is the full game, and the only level where meteors speed up as you play. EASY, MEDIUM and HARD also have hearts to collect. Every level has its own leaderboards.',
   },
   {
     heading: 'SCORING & COMBOS',

@@ -118,7 +118,12 @@ export class Game extends Scene {
       },
       MODES[this.mode].speedRamps
     );
-    this.spawner.update(delta, difficulty, this.field);
+    this.spawner.update(
+      delta,
+      difficulty,
+      this.field,
+      this.lives < STARTING_LIVES
+    );
 
     for (const meteor of [...this.spawner.meteors]) {
       meteor.step(dt, this.field);
@@ -211,6 +216,10 @@ export class Game extends Scene {
     if (meteor.kind !== 'normal') {
       trackInteraction(`${meteor.kind}_destroyed`);
     }
+    if (meteor.kind === 'heart') {
+      this.onHeartCollected(meteor);
+      return;
+    }
     const golden = meteor.kind === 'golden';
     this.effects.scorePopup(
       meteor.x,
@@ -258,6 +267,10 @@ export class Game extends Scene {
         this.onDangerPenalty(meteor.x, meteor.y);
         return;
       }
+      // A missed heart meteor costs nothing; another comes later.
+      if (meteor.kind === 'heart') {
+        return;
+      }
     }
 
     this.lives -= 1;
@@ -271,11 +284,25 @@ export class Game extends Scene {
     }
   }
 
+  /** Typing a heart meteor's word gives one lost life back. */
+  private onHeartCollected(meteor: Meteor) {
+    this.lives = Math.min(STARTING_LIVES, this.lives + 1);
+    this.effects.scorePopup(
+      meteor.x,
+      meteor.y - meteor.radius - 10,
+      '+1 LIFE',
+      CSS.danger,
+      26
+    );
+    this.sfx.bonus();
+    this.refreshHud();
+  }
+
   /** Danger meteors cost 2-3 points instead of a life. */
   private onDangerPenalty(x: number, y: number) {
     const penalty = Phaser.Math.Between(DANGER_PENALTY_MIN, DANGER_PENALTY_MAX);
     this.score.registerPenalty(penalty);
-    this.effects.scorePopup(x, y - 30, `-${penalty}`, CSS.danger, 24);
+    this.effects.scorePopup(x, y - 30, `-${penalty}`, CSS.violet, 24);
     this.sfx.penalty();
     this.refreshHud();
   }

@@ -26,7 +26,12 @@ const TRAVEL_FACTOR: Record<MeteorKind, number> = {
   normal: 1,
   danger: 0.6,
   golden: 1.8,
+  // Heart meteors share the danger speed.
+  heart: 0.6,
 };
+
+/** Every heart meteor carries this word. */
+const HEART_WORD = 'heart';
 
 /** Danger meteors carry short words: 3 or 4 letters. */
 const DANGER_TIERS: readonly NormalTier[] = ['easy', 'medium'];
@@ -50,10 +55,11 @@ const randomBounce = (startX: number): BouncePath =>
     Phaser.Math.FloatBetween(0.15, 0.85)
   );
 
-/** Normal meteors fly straight at the ship from a random start. */
+/** Normal and heart meteors fly straight at the ship from a random start. */
 const pathFor = (kind: MeteorKind, startX: number): MeteorPath => {
   switch (kind) {
     case 'normal':
+    case 'heart':
       return { kind: 'line', startX };
     case 'danger':
       return randomBounce(startX);
@@ -81,7 +87,13 @@ export class MeteorSpawner {
     this.specials = new SpecialScheduler(specialKinds);
   }
 
-  update(deltaMs: number, difficulty: Difficulty, field: Playfield): void {
+  /** `missingLife` lets heart meteors appear on levels that allow them. */
+  update(
+    deltaMs: number,
+    difficulty: Difficulty,
+    field: Playfield,
+    missingLife = false
+  ): void {
     this.sinceLastSpawnMs += deltaMs;
     const due =
       this.meteors.length === 0
@@ -92,7 +104,7 @@ export class MeteorSpawner {
       this.meteors.length < difficulty.maxActiveMeteors &&
       this.sinceLastSpawnMs >= due
     ) {
-      this.spawn(difficulty, field);
+      this.spawn(difficulty, field, missingLife);
       this.sinceLastSpawnMs = 0;
     }
   }
@@ -106,11 +118,15 @@ export class MeteorSpawner {
     this.activeWords.delete(meteor.word);
   }
 
-  private spawn(difficulty: Difficulty, field: Playfield): void {
-    const { kind, word } = this.pickKindAndWord(difficulty);
+  private spawn(
+    difficulty: Difficulty,
+    field: Playfield,
+    missingLife: boolean
+  ): void {
+    const { kind, word } = this.pickKindAndWord(difficulty, missingLife);
     const startX = this.pickStartX(field);
     this.activeWords.add(word);
-    this.specials.record(kind);
+    this.specials.record(kind, missingLife);
     this.meteors.push(
       new Meteor(
         this.scene,
@@ -127,19 +143,20 @@ export class MeteorSpawner {
   }
 
   /**
-   * Danger and golden meteors arrive on a schedule (see SpecialScheduler).
-   * Danger words are easy or medium (3-4 letters); golden ones are longer than 8.
+   * Special meteors arrive on a schedule (see SpecialScheduler). Danger words
+   * are easy or medium (3-4 letters), golden ones are longer than 8, and a
+   * heart meteor always says "heart".
    */
-  private pickKindAndWord(difficulty: Difficulty): {
+  private pickKindAndWord(
+    difficulty: Difficulty,
+    missingLife: boolean
+  ): {
     kind: MeteorKind;
     word: string;
   } {
-    const kind = this.specials.next();
+    const kind = this.specials.next(missingLife);
     if (kind !== 'normal') {
-      const word =
-        kind === 'golden'
-          ? this.words.pickFromTier('golden', this.activeWords)
-          : this.pickDangerWord();
+      const word = this.pickSpecialWord(kind);
       if (word) {
         return { kind, word };
       }
@@ -148,6 +165,17 @@ export class MeteorSpawner {
       kind: 'normal',
       word: this.words.pick(difficulty.tierWeights, this.activeWords),
     };
+  }
+
+  private pickSpecialWord(kind: Exclude<MeteorKind, 'normal'>): string | null {
+    switch (kind) {
+      case 'golden':
+        return this.words.pickFromTier('golden', this.activeWords);
+      case 'danger':
+        return this.pickDangerWord();
+      case 'heart':
+        return this.activeWords.has(HEART_WORD) ? null : HEART_WORD;
+    }
   }
 
   /** A word from a random danger tier, falling back to the other one. */

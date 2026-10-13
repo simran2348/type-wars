@@ -254,6 +254,7 @@ export const createTextures = (scene: Scene): void => {
   paint(scene, TEXTURES.ship, 64, 66, ship);
   paint(scene, TEXTURES.flame, 20, 40, flame);
   paint(scene, TEXTURES.heart, 24, 22, heart);
+  paint(scene, TEXTURES.heartLarge, 48, 44, heart);
   TEXTURES.meteors.forEach((key, i) =>
     paint(scene, key, 96, 96, meteor(i + 1))
   );
