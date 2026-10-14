@@ -1,7 +1,7 @@
 import type * as Phaser from 'phaser';
 import type { GameMode } from '../../shared/api';
 import { fetchLeaderboards } from '../api';
-import { DEFAULT_MODE } from '../modes';
+import { DEFAULT_MODE, MODES } from '../modes';
 import { CSS, FONTS } from '../theme';
 import { Button } from '../ui/Button';
 import {
@@ -16,9 +16,9 @@ import { addText, addTitle } from '../ui/text';
 const TABS_TOP = 112;
 const PANEL_TOP = TABS_TOP + MODE_TABS_HEIGHT + 10;
 
-/** Today's Best and All Time for a chosen level, reachable from the start screen. */
+/** The all-time leaderboard for a chosen level, reachable from the start screen. */
 export class Leaderboard extends MenuScene {
-  protected readonly designWidth = LEADERBOARD_PANEL_WIDTH + 40;
+  protected readonly designWidth = 560;
   protected readonly designHeight = PANEL_TOP + LEADERBOARD_PANEL_HEIGHT + 100;
 
   /** The level whose boards are on screen; guards against stale responses. */
@@ -30,7 +30,8 @@ export class Leaderboard extends MenuScene {
 
   protected build() {
     const cx = this.designWidth / 2;
-    const panel = new LeaderboardPanel(this, 20, PANEL_TOP);
+    const left = (this.designWidth - LEADERBOARD_PANEL_WIDTH) / 2;
+    const panel = new LeaderboardPanel(this, left, PANEL_TOP);
     const note = addText(this, cx, 84, 'Top 10 Reddit pilots', {
       fontFamily: FONTS.body,
       fontSize: '20px',
@@ -39,7 +40,7 @@ export class Leaderboard extends MenuScene {
     this.viewing = DEFAULT_MODE;
     const tabs = new ModeTabs(
       this,
-      20,
+      left,
       TABS_TOP,
       LEADERBOARD_PANEL_WIDTH,
       this.viewing,
@@ -83,13 +84,19 @@ export class Leaderboard extends MenuScene {
     mode: GameMode
   ): Promise<void> {
     try {
-      const { leaderboards, username } = await fetchLeaderboards(mode);
+      const { leaderboard, username, lastScore } =
+        await fetchLeaderboards(mode);
       // The player may have left this screen or picked another level while
       // the request was in flight.
       if (!this.sys.isActive() || mode !== this.viewing) {
         return;
       }
-      panel.showBoards(leaderboards, username);
+      panel.show({
+        entries: leaderboard,
+        player: username,
+        lastScore,
+        medals: MODES[mode].medals,
+      });
       note.setText(
         username
           ? `Playing as u/${username}`

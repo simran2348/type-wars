@@ -1,13 +1,12 @@
 import { requestExpandedMode } from '@devvit/web/client';
 import {
-  GAME_MODES,
   LEADERBOARD_SIZE,
   type GameMode,
   type LeaderboardEntry,
   type LeaderboardResponse,
 } from '../shared/api';
 import { fetchLeaderboards } from './api';
-import { DEFAULT_MODE, MODES } from './modes';
+import { DEFAULT_MODE, LEADERBOARD_TABS, MODES } from './modes';
 import { setupAdmin } from './splashAdmin';
 
 const STARS_PER_PIXEL = 1 / 900;
@@ -55,11 +54,17 @@ const messageRow = (text: string): HTMLLIElement => {
   return row;
 };
 
-/** Username and score only, no rank numbers. */
+const MEDAL_CLASSES = ['gold', 'silver', 'bronze'];
+
+/**
+ * Username and score only. On a board with medals the top three get a
+ * numbered gold, silver or bronze medallion.
+ */
 const renderBoard = (
   list: HTMLElement | null,
   entries: LeaderboardEntry[],
-  player: string | null
+  player: string | null,
+  medals: boolean
 ): void => {
   if (!list) {
     return;
@@ -69,15 +74,24 @@ const renderBoard = (
     return;
   }
   list.replaceChildren(
-    ...entries.slice(0, LEADERBOARD_SIZE).map((entry) => {
+    ...entries.slice(0, LEADERBOARD_SIZE).map((entry, i) => {
       const row = document.createElement('li');
+      const medalClass = medals ? MEDAL_CLASSES[i] : undefined;
       if (entry.username === player) {
-        row.className = 'me';
+        row.classList.add('me');
+      }
+      if (medalClass) {
+        row.classList.add('podium', medalClass);
+        const medal = document.createElement('span');
+        medal.className = 'medal';
+        medal.textContent = String(i + 1);
+        row.append(medal);
       }
       const name = document.createElement('span');
       name.className = 'name';
       name.textContent = `u/${entry.username}`;
       const score = document.createElement('span');
+      score.className = 'score';
       score.textContent = entry.score.toLocaleString('en-US');
       row.append(name, score);
       return row;
@@ -85,38 +99,38 @@ const renderBoard = (
   );
 };
 
-const renderLastScore = ({
-  username,
-  lastScore,
-  lastScoreMode,
-}: LeaderboardResponse) => {
+/** The viewer's most recent score on the level being shown. */
+const renderLastScore = ({ username, lastScore }: LeaderboardResponse) => {
   const target = element('last-score');
   if (!target) {
     return;
   }
   target.textContent =
     username === null
-      ? 'Log in to track your score'
+      ? 'Log in to track'
       : lastScore === null
         ? 'No games yet'
-        : `${lastScore.toLocaleString('en-US')}${lastScoreMode ? ` · ${MODES[lastScoreMode].label}` : ''}`;
+        : lastScore.toLocaleString('en-US');
 };
 
 let adminReady = false;
-/** The level whose boards are shown; guards against stale responses. */
+/** The level whose board is shown; guards against stale responses. */
 let viewing: GameMode = DEFAULT_MODE;
 
 const loadBoards = async (): Promise<void> => {
   const mode = viewing;
-  const today = element('board-today');
-  const allTime = element('board-all-time');
+  const board = element('board-all-time');
   try {
     const response = await fetchLeaderboards(mode);
     if (mode !== viewing) {
       return;
     }
-    renderBoard(today, response.leaderboards.today, response.username);
-    renderBoard(allTime, response.leaderboards.allTime, response.username);
+    renderBoard(
+      board,
+      response.leaderboard,
+      response.username,
+      MODES[mode].medals
+    );
     renderLastScore(response);
     if (response.isAdmin && !adminReady) {
       adminReady = true;
@@ -125,19 +139,22 @@ const loadBoards = async (): Promise<void> => {
   } catch (error) {
     console.error(error);
     if (mode === viewing) {
-      today?.replaceChildren(messageRow('Unavailable'));
-      allTime?.replaceChildren(messageRow('Unavailable'));
+      board?.replaceChildren(messageRow('Unavailable'));
+      const lastScore = element('last-score');
+      if (lastScore) {
+        lastScore.textContent = '';
+      }
     }
   }
 };
 
-/** One tab per level; picking one reloads the boards for that level. */
+/** One tab per level; picking one reloads the board for that level. */
 const setupLevelTabs = (): void => {
   const container = element('level-tabs');
   if (!container) {
     return;
   }
-  const tabs = GAME_MODES.map((mode) => {
+  const tabs = LEADERBOARD_TABS.map((mode) => {
     const tab = document.createElement('button');
     tab.type = 'button';
     tab.className = 'level-tab';
@@ -152,7 +169,6 @@ const setupLevelTabs = (): void => {
       tabs.forEach((other) =>
         other.setAttribute('aria-selected', String(other === tab))
       );
-      element('board-today')?.replaceChildren(messageRow('Loading…'));
       element('board-all-time')?.replaceChildren(messageRow('Loading…'));
       void loadBoards();
     });
@@ -176,7 +192,7 @@ element('play-button')?.addEventListener('click', (event) => {
 });
 element('leaderboards-button')?.addEventListener('click', () => {
   showScreen('leaderboard');
-  // Refresh so the boards and last score reflect any games just played.
+  // Refresh so the board and last score reflect any games just played.
   void loadBoards();
 });
 element('back-button')?.addEventListener('click', () => showScreen('home'));

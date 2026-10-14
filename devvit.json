@@ -20,6 +20,7 @@
   "permissions": {
     "journeys": true,
     "reddit": {
+      "scope": "user",
       "asUser": ["SUBMIT_COMMENT"]
     }
   },

@@ -22,6 +22,13 @@ export const CSS = {
   black: '#000000',
 } as const;
 
+/** Gold, silver and bronze for the ranked leaderboard's top three, in order. */
+export const MEDALS = [
+  { color: 0xffcf33, rim: 0x8a6a00, css: '#ffcf33' },
+  { color: 0xcfd6e0, rim: 0x6b7480, css: '#cfd6e0' },
+  { color: 0xe0915a, rim: 0x7a4420, css: '#e0915a' },
+] as const;
+
 export const FONTS = {
   /** Wide geometric display face for titles, HUD and buttons. */
   display: '"Orbitron", "Segoe UI", system-ui, sans-serif',

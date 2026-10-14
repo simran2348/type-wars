@@ -22,7 +22,7 @@ const ENTER_DELAY_MS = 800;
 
 /** Overlay shown on top of the frozen Game scene. */
 export class GameOver extends MenuScene {
-  protected readonly designWidth = LEADERBOARD_PANEL_WIDTH + 40;
+  protected readonly designWidth = 560;
   protected readonly designHeight = PANEL_TOP + LEADERBOARD_PANEL_HEIGHT + 194;
   private summary: RunResult;
   private shade: Phaser.GameObjects.Rectangle;
@@ -58,14 +58,15 @@ export class GameOver extends MenuScene {
   protected build() {
     const cx = this.designWidth / 2;
     const { score, destroyed, accuracy, bestCombo } = this.summary;
-    const panel = new LeaderboardPanel(this, 20, PANEL_TOP);
+    const left = (this.designWidth - LEADERBOARD_PANEL_WIDTH) / 2;
+    const panel = new LeaderboardPanel(this, left, PANEL_TOP);
     this.viewing = this.summary.mode;
     this.player = null;
     // Hidden until the score is saved, so another level's board can't be
     // requested before this run is on its own board.
     const tabs = new ModeTabs(
       this,
-      20,
+      left,
       TABS_TOP,
       LEADERBOARD_PANEL_WIDTH,
       this.viewing,
@@ -181,14 +182,19 @@ export class GameOver extends MenuScene {
     tabs: ModeTabs
   ): Promise<void> {
     try {
-      const { leaderboards, username, recorded, canComment } =
+      const { leaderboard, username, lastScore, recorded, canComment } =
         await submitScore(this.summary.score, this.summary.mode, finishRun());
       // The player may already have pressed PLAY AGAIN.
       if (!this.sys.isActive()) {
         return;
       }
       this.player = username;
-      panel.showBoards(leaderboards, username);
+      panel.show({
+        entries: leaderboard,
+        player: username,
+        lastScore,
+        medals: MODES[this.summary.mode].medals,
+      });
       tabs.setVisible(true);
       if (!recorded && username === null) {
         note.setText('Log in to Reddit to save your scores.');
@@ -213,9 +219,15 @@ export class GameOver extends MenuScene {
     this.viewing = mode;
     panel.showMessage('Loading…');
     try {
-      const { leaderboards, username } = await fetchLeaderboards(mode);
+      const { leaderboard, username, lastScore } =
+        await fetchLeaderboards(mode);
       if (this.sys.isActive() && mode === this.viewing) {
-        panel.showBoards(leaderboards, username ?? this.player);
+        panel.show({
+          entries: leaderboard,
+          player: username ?? this.player,
+          lastScore,
+          medals: MODES[mode].medals,
+        });
       }
     } catch (error) {
       console.error(error);

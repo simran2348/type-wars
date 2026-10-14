@@ -11,7 +11,7 @@
   </head>
   <body class="app">
     <canvas class="stars" id="stars" aria-hidden="true"></canvas>
-    <span class="version" aria-label="Version 3">V.3</span>
+    <span class="version" aria-label="Version 3.1">V.3.1</span>
     <button class="admin-toggle" id="admin-toggle" type="button" hidden>
       Admin
     </button>
@@ -23,10 +23,7 @@
       hidden
     >
       <h2>Admin</h2>
-      <p>
-        Permanently deletes every score on Today's Best and All Time, for every
-        level.
-      </p>
+      <p>Permanently deletes every score on every level's leaderboard.</p>
       <button class="admin-reset" id="admin-reset" type="button">
         Reset all scores
       </button>
@@ -49,19 +46,11 @@
         role="tablist"
         aria-label="Level"
       ></div>
-      <section class="boards" aria-label="Leaderboards">
-        <div class="board">
-          <h2>Today's Best</h2>
-          <ol id="board-today">
-            <li class="empty">Loading…</li>
-          </ol>
-        </div>
-        <div class="board">
-          <h2>All Time</h2>
-          <ol id="board-all-time">
-            <li class="empty">Loading…</li>
-          </ol>
-        </div>
+      <section class="board" aria-label="All time leaderboard">
+        <h2>All Time</h2>
+        <ol id="board-all-time">
+          <li class="empty">Loading…</li>
+        </ol>
       </section>
       <div class="last-score">
         <span class="last-score-label">Your last score</span>

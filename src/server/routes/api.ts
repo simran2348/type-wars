@@ -12,7 +12,7 @@ import type {
 import { isAdmin } from '../core/admin';
 import {
   getLastScore,
-  getLeaderboards,
+  getLeaderboard,
   parseMode,
   parseModeQuery,
   parseScore,
@@ -65,7 +65,7 @@ const endRunJourney = async (
   }
 };
 
-/** One level's two leaderboards (`?mode=`, ranked by default) plus the viewer's Reddit username. */
+/** One level's leaderboard (`?mode=`, ranked by default), plus the viewer's username and last score on it. */
 api.get('/leaderboard', async (c) => {
   const mode = parseModeQuery(c.req.query('mode'));
   if (mode === null) {
@@ -76,16 +76,15 @@ api.get('/leaderboard', async (c) => {
   }
   try {
     const username = (await reddit.getCurrentUsername()) ?? null;
-    const [leaderboards, lastRun] = await Promise.all([
-      getLeaderboards(mode),
-      getLastScore(username),
+    const [leaderboard, lastScore] = await Promise.all([
+      getLeaderboard(mode),
+      getLastScore(username, mode),
     ]);
     return c.json<LeaderboardResponse>({
       username,
       isAdmin: isAdmin(username),
-      lastScore: lastRun?.score ?? null,
-      lastScoreMode: lastRun?.mode ?? null,
-      leaderboards,
+      lastScore,
+      leaderboard,
     });
   } catch (error) {
     console.error('Leaderboard fetch failed:', error);
@@ -97,7 +96,7 @@ api.get('/leaderboard', async (c) => {
 });
 
 /**
- * Submits the finished run's score and returns both leaderboards.
+ * Submits the finished run's score and returns its level's leaderboard.
  * Identity and timestamps come from the server, never from the client.
  */
 api.post('/score', async (c) => {
@@ -122,7 +121,7 @@ api.post('/score', async (c) => {
 
   try {
     const username = (await reddit.getCurrentUsername()) ?? null;
-    // Every level has its own leaderboards.
+    // Every level has its own leaderboard.
     const recorded = username !== null && score > 0;
     const canComment =
       username !== null && score > 0 && context.postId !== undefined;
@@ -143,8 +142,7 @@ api.post('/score', async (c) => {
       username,
       isAdmin: isAdmin(username),
       lastScore: username === null ? null : score,
-      lastScoreMode: username === null ? null : mode,
-      leaderboards: await getLeaderboards(mode),
+      leaderboard: await getLeaderboard(mode),
     });
   } catch (error) {
     console.error('Score submission failed:', error);

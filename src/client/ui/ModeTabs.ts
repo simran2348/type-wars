@@ -1,6 +1,6 @@
 import * as Phaser from 'phaser';
-import { GAME_MODES, type GameMode } from '../../shared/api';
-import { MODES } from '../modes';
+import type { GameMode } from '../../shared/api';
+import { LEADERBOARD_TABS, MODES } from '../modes';
 import { COLORS, CSS, FONTS } from '../theme';
 import { addText } from './text';
 
@@ -33,9 +33,10 @@ export class ModeTabs extends Phaser.GameObjects.Container {
     super(scene, x, y);
     this.selected = selected;
     this.tabWidth =
-      (width - TAB_GAP * (GAME_MODES.length - 1)) / GAME_MODES.length;
+      (width - TAB_GAP * (LEADERBOARD_TABS.length - 1)) /
+      LEADERBOARD_TABS.length;
 
-    this.tabs = GAME_MODES.map((mode, i) => {
+    this.tabs = LEADERBOARD_TABS.map((mode, i) => {
       const left = i * (this.tabWidth + TAB_GAP);
       const background = scene.add.graphics({ x: left, y: 0 });
       const label = addText(
