@@ -8,6 +8,8 @@ export type ModeRules = {
   golden: boolean;
   /** Whether heart meteors appear to win back a lost life. */
   heart: boolean;
+  /** Whether finishing a golden word destroys every other meteor on screen. */
+  goldenClears: boolean;
   /** Whether this level's leaderboard marks its top three with medallions. */
   medals: boolean;
   /** The most meteors on screen at once, reached late in a run. */
@@ -28,6 +30,7 @@ export const MODES: Record<GameMode, ModeRules> = {
     label: 'EASY',
     danger: false,
     golden: false,
+    goldenClears: false,
     heart: true,
     medals: false,
     maxMeteors: 4,
@@ -37,6 +40,7 @@ export const MODES: Record<GameMode, ModeRules> = {
     label: 'MEDIUM',
     danger: true,
     golden: false,
+    goldenClears: false,
     heart: true,
     medals: false,
     maxMeteors: 5,
@@ -46,6 +50,7 @@ export const MODES: Record<GameMode, ModeRules> = {
     label: 'HARD',
     danger: true,
     golden: true,
+    goldenClears: true,
     heart: true,
     medals: false,
     maxMeteors: 6,
@@ -55,6 +60,7 @@ export const MODES: Record<GameMode, ModeRules> = {
     label: 'RANKED',
     danger: true,
     golden: true,
+    goldenClears: true,
     heart: false,
     medals: true,
     maxMeteors: 7,

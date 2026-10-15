@@ -75,6 +75,13 @@ export class Effects {
     );
   }
 
+  /** A golden word cleared the screen: a gold flash and a wide shockwave. */
+  goldenBlast(x: number, y: number): void {
+    this.shockwave(x, y, 900, COLORS.gold);
+    this.scene.cameras.main.flash(260, 255, 190, 60);
+    this.scene.cameras.main.shake(220, 0.008);
+  }
+
   /** A meteor reached the ship. */
   shipHit(x: number, y: number): void {
     this.danger.explode(26, x, y);

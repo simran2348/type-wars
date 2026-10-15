@@ -211,6 +211,14 @@ export class Game extends Scene {
   private onWordCompleted(meteor: Meteor) {
     meteor.markDestroyed();
     this.spawner.remove(meteor);
+    this.reward(meteor);
+    if (meteor.kind === 'golden' && MODES[this.mode].goldenClears) {
+      this.clearScreen(meteor);
+    }
+  }
+
+  /** Scores a destroyed meteor: its usual points, or a life for a heart. */
+  private reward(meteor: Meteor) {
     const points = this.score.registerDestroyed(meteor.word, meteor.kind);
     trackDestroyed(this.score.destroyed);
     if (meteor.kind !== 'normal') {
@@ -230,6 +238,30 @@ export class Game extends Scene {
     );
     if (golden) {
       this.sfx.bonus();
+    }
+  }
+
+  /**
+   * Hard and ranked: finishing a golden word destroys every other meteor in
+   * play. Each one pays out as if it had been typed, so a heart on screen
+   * gives its life back.
+   */
+  private clearScreen(golden: Meteor) {
+    const cleared = [...this.spawner.meteors];
+    for (const meteor of cleared) {
+      this.typing.release(meteor);
+      this.spawner.remove(meteor);
+      // Marked missed so bolts already flying at it land harmlessly.
+      meteor.markMissed();
+      this.reward(meteor);
+      this.effects.explode(meteor.x, meteor.y, meteor.radius);
+      meteor.destroy();
+    }
+    this.refreshKeyHint();
+    this.refreshHud();
+    this.effects.goldenBlast(golden.x, golden.y);
+    if (cleared.length > 0) {
+      this.sfx.explode();
     }
   }
 

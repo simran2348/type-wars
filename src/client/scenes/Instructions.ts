@@ -30,7 +30,7 @@ const SECTIONS: readonly Section[] = [
   {
     heading: 'GOLDEN WORDS',
     tone: 'gold',
-    body: 'Gold meteors are slow and carry long words. Finish one for 25 points. If one gets past you, you lose a heart.',
+    body: 'Gold meteors are slow and carry long words. Finish one for 25 points. On HARD and RANKED it also destroys every other meteor on screen, and you score each one as usual (a heart on screen gives you its life). If one gets past you, you lose a heart.',
   },
   {
     heading: 'HEARTS',
