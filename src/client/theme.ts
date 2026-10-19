@@ -6,6 +6,8 @@ export const COLORS = {
   bolt: 0x5dff6b,
   gold: 0xffa000,
   violet: 0xb45cff,
+  /** Cooldown pickups and the slow-motion effect. */
+  ice: 0x5ff0ff,
   panel: 0x06070b,
   panelBorder: 0x2a2e38,
 } as const;
@@ -19,6 +21,7 @@ export const CSS = {
   gold: '#ffa000',
   /** Lighter than the violet glow so danger words stay readable. */
   violet: '#cfa0ff',
+  ice: '#9ff6ff',
   black: '#000000',
 } as const;
 
@@ -52,6 +55,12 @@ export const TEXTURES = {
   heart: 'heart',
   /** Bigger painting of the heart, for heart meteors. */
   heartLarge: 'heart-large',
+  /** Cooldown pickup: an icy crystal meteor. */
+  iceMeteor: 'meteor-ice',
+  /** Frost strips along the play area's edges during slow motion. */
+  frostTop: 'frost-top',
+  frostLeft: 'frost-left',
+  flake: 'flake',
   flame: 'flame',
   meteors: ['meteor-0', 'meteor-1', 'meteor-2'],
   bullet: 'bullet',

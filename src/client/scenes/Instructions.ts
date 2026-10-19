@@ -5,7 +5,7 @@ import { fitToViewport } from '../ui/layout';
 import { MenuScene } from '../ui/MenuScene';
 import { addText, addTitle } from '../ui/text';
 
-type Tone = 'accent' | 'danger' | 'gold' | 'violet';
+type Tone = 'accent' | 'danger' | 'gold' | 'violet' | 'ice';
 
 type Section = {
   heading: string;
@@ -36,6 +36,11 @@ const SECTIONS: readonly Section[] = [
     heading: 'HEARTS',
     tone: 'danger',
     body: 'You start with 3 hearts. On EASY, MEDIUM and HARD, a red heart sometimes falls after you lose one. Type "heart" to get a heart back. Missing it costs nothing.',
+  },
+  {
+    heading: 'COOLDOWN',
+    tone: 'ice',
+    body: 'On RANKED, once meteors speed up, an ice meteor with the word "cooldown" sometimes falls. Type it to freeze the sky: every meteor slows to half speed for 10 seconds. Missing it costs nothing.',
   },
   {
     heading: 'LEVELS',

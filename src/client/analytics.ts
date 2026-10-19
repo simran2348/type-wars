@@ -8,7 +8,7 @@ import type { GameMode } from '../shared/api';
  * - App.Ready: the game finished loading and the menu is interactive.
  * - Journey.Start: the player picked a level or pressed PLAY AGAIN.
  * - Journey.Progress: meteor milestones (10, 25, 50, 75, 100 destroyed).
- * - Journey.Interaction: golden/danger/heart meteor destroyed, life lost, sound toggled.
+ * - Journey.Interaction: golden/danger/heart/cooldown meteor destroyed, life lost, sound toggled.
  * - Journey.End: game over, ended server-side with the validated score
  *   (see /api/score); or `complete: false` if the player leaves mid-run.
  *
@@ -30,6 +30,7 @@ export type RunInteraction =
   | 'golden_destroyed'
   | 'danger_destroyed'
   | 'heart_destroyed'
+  | 'slow_destroyed'
   | 'life_lost'
   | 'sound_toggled';
 

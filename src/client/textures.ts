@@ -230,6 +230,88 @@ const heart: Painter = (ctx, w, h) => {
   ctx.fill();
 };
 
+/** Cooldown pickup: a faceted chunk of ice. */
+const iceMeteor: Painter = (ctx, w, h) => {
+  const cx = w / 2;
+  const cy = h / 2;
+  const points = [
+    [0.5, 0.08],
+    [0.74, 0.16],
+    [0.9, 0.38],
+    [0.86, 0.66],
+    [0.66, 0.88],
+    [0.38, 0.9],
+    [0.14, 0.72],
+    [0.1, 0.42],
+    [0.26, 0.18],
+  ] as const;
+  ctx.beginPath();
+  points.forEach(([x, y], i) =>
+    i === 0 ? ctx.moveTo(x * w, y * h) : ctx.lineTo(x * w, y * h)
+  );
+  ctx.closePath();
+  const body = ctx.createLinearGradient(0, 0, w, h);
+  body.addColorStop(0, '#f2fdff');
+  body.addColorStop(0.45, '#9fe9f7');
+  body.addColorStop(1, '#3fa9cc');
+  ctx.fillStyle = body;
+  ctx.fill();
+  ctx.lineWidth = 1.5;
+  ctx.strokeStyle = '#e8fdff';
+  ctx.stroke();
+
+  // Facets: lines from an off-centre point out to every corner.
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.55)';
+  ctx.lineWidth = 1;
+  for (const [x, y] of points) {
+    ctx.beginPath();
+    ctx.moveTo(cx - w * 0.06, cy - h * 0.06);
+    ctx.lineTo(x * w, y * h);
+    ctx.stroke();
+  }
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+  ctx.beginPath();
+  ctx.ellipse(w * 0.36, h * 0.3, w * 0.07, h * 0.035, -0.6, 0, Math.PI * 2);
+  ctx.fill();
+};
+
+/**
+ * A frost strip: icy at the outer edge (top or left), fading to clear.
+ * Stretched along the play area's edges during slow motion.
+ */
+const frostStrip =
+  (vertical: boolean): Painter =>
+  (ctx, w, h) => {
+    const gradient = vertical
+      ? ctx.createLinearGradient(0, 0, 0, h)
+      : ctx.createLinearGradient(0, 0, w, 0);
+    gradient.addColorStop(0, 'rgba(215, 250, 255, 0.6)');
+    gradient.addColorStop(0.35, 'rgba(160, 240, 255, 0.25)');
+    gradient.addColorStop(1, 'rgba(160, 240, 255, 0)');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, w, h);
+  };
+
+/** A small six-armed snowflake. */
+const flake: Painter = (ctx, w, h) => {
+  ctx.translate(w / 2, h / 2);
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 1.2;
+  ctx.lineCap = 'round';
+  const arm = w * 0.42;
+  for (let i = 0; i < 6; i++) {
+    ctx.rotate(Math.PI / 3);
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(0, -arm);
+    ctx.moveTo(0, -arm * 0.55);
+    ctx.lineTo(arm * 0.22, -arm * 0.75);
+    ctx.moveTo(0, -arm * 0.55);
+    ctx.lineTo(-arm * 0.22, -arm * 0.75);
+    ctx.stroke();
+  }
+};
+
 const stars =
   (
     count: number,
@@ -255,6 +337,10 @@ export const createTextures = (scene: Scene): void => {
   paint(scene, TEXTURES.flame, 20, 40, flame);
   paint(scene, TEXTURES.heart, 24, 22, heart);
   paint(scene, TEXTURES.heartLarge, 48, 44, heart);
+  paint(scene, TEXTURES.iceMeteor, 96, 96, iceMeteor);
+  paint(scene, TEXTURES.frostTop, 8, 64, frostStrip(true), 1);
+  paint(scene, TEXTURES.frostLeft, 64, 8, frostStrip(false), 1);
+  paint(scene, TEXTURES.flake, 16, 16, flake);
   TEXTURES.meteors.forEach((key, i) =>
     paint(scene, key, 96, 96, meteor(i + 1))
   );

@@ -11,7 +11,11 @@ import {
 import type { Playfield } from '../playfield';
 import type { NormalTier } from '../data/words';
 import type { Difficulty } from './Difficulty';
-import { SpecialScheduler, type SpecialKinds } from './SpecialScheduler';
+import {
+  SpecialScheduler,
+  type SpawnContext,
+  type SpecialKinds,
+} from './SpecialScheduler';
 import type { WordPicker } from './WordPicker';
 
 /** Delay before the first meteor and when the screen is empty. */
@@ -30,10 +34,13 @@ const TRAVEL_FACTOR: Record<MeteorKind, number> = {
   golden: 1.8,
   // Heart meteors share the danger speed.
   heart: 0.6,
+  slow: 1,
 };
 
 /** Every heart meteor carries this word. */
 const HEART_WORD = 'heart';
+/** Every slow-motion pickup carries this word; long on purpose, as it's ranked. */
+const SLOW_WORD = 'cooldown';
 
 /** Danger meteors carry short words: 3 or 4 letters. */
 const DANGER_TIERS: readonly NormalTier[] = ['easy', 'medium'];
@@ -62,6 +69,7 @@ const pathFor = (kind: MeteorKind, startX: number): MeteorPath => {
   switch (kind) {
     case 'normal':
     case 'heart':
+    case 'slow':
       return {
         kind: 'line',
         startX,
@@ -93,12 +101,12 @@ export class MeteorSpawner {
     this.specials = new SpecialScheduler(specialKinds);
   }
 
-  /** `missingLife` lets heart meteors appear on levels that allow them. */
+  /** `context` lets heart and cooldown pickups appear when they would help. */
   update(
     deltaMs: number,
     difficulty: Difficulty,
     field: Playfield,
-    missingLife = false
+    context: SpawnContext = { missingLife: false, slowUseful: false }
   ): void {
     this.sinceLastSpawnMs += deltaMs;
     const due =
@@ -110,7 +118,7 @@ export class MeteorSpawner {
       this.meteors.length < difficulty.maxActiveMeteors &&
       this.sinceLastSpawnMs >= due
     ) {
-      this.spawn(difficulty, field, missingLife);
+      this.spawn(difficulty, field, context);
       this.sinceLastSpawnMs = 0;
     }
   }
@@ -127,12 +135,12 @@ export class MeteorSpawner {
   private spawn(
     difficulty: Difficulty,
     field: Playfield,
-    missingLife: boolean
+    context: SpawnContext
   ): void {
-    const { kind, word } = this.pickKindAndWord(difficulty, missingLife);
+    const { kind, word } = this.pickKindAndWord(difficulty, context);
     const startX = this.pickStartX(field);
     this.activeWords.add(word);
-    this.specials.record(kind, missingLife);
+    this.specials.record(kind, context);
     this.meteors.push(
       new Meteor(
         this.scene,
@@ -150,17 +158,17 @@ export class MeteorSpawner {
 
   /**
    * Special meteors arrive on a schedule (see SpecialScheduler). Danger words
-   * are easy or medium (3-4 letters), golden ones are longer than 8, and a
-   * heart meteor always says "heart".
+   * are easy or medium (3-4 letters), golden ones are longer than 8, a heart
+   * meteor always says "heart" and a slow-motion pickup "cooldown".
    */
   private pickKindAndWord(
     difficulty: Difficulty,
-    missingLife: boolean
+    context: SpawnContext
   ): {
     kind: MeteorKind;
     word: string;
   } {
-    const kind = this.specials.next(missingLife);
+    const kind = this.specials.next(context);
     if (kind !== 'normal') {
       const word = this.pickSpecialWord(kind);
       if (word) {
@@ -181,6 +189,8 @@ export class MeteorSpawner {
         return this.pickDangerWord();
       case 'heart':
         return this.activeWords.has(HEART_WORD) ? null : HEART_WORD;
+      case 'slow':
+        return this.activeWords.has(SLOW_WORD) ? null : SLOW_WORD;
     }
   }
 

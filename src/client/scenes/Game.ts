@@ -20,7 +20,8 @@ import { ScoreSystem, type RunSummary } from '../systems/ScoreSystem';
 import { Sfx } from '../systems/Sfx';
 import { TypingSystem } from '../systems/TypingSystem';
 import { WordPicker } from '../systems/WordPicker';
-import { COLORS, CSS } from '../theme';
+import { COLORS, CSS, TEXTURES } from '../theme';
+import { TEXTURE_SCALE } from '../textures';
 import { applyView } from '../view';
 import { Hud } from '../ui/Hud';
 
@@ -29,6 +30,15 @@ const DANGER_PENALTY_MIN = 2;
 const DANGER_PENALTY_MAX = 3;
 const GAME_OVER_DELAY_MS = 1100;
 const LETTER = /^[a-z]$/;
+/** A cooldown pickup halves every meteor's speed for this long... */
+const SLOW_SECONDS = 10;
+const SLOW_FACTOR = 0.5;
+/** ...then eases back to full speed over this last stretch. */
+const SLOW_EASE_SECONDS = 1;
+/** Cooldowns only appear once normal meteors fall faster than this (start is 10s). */
+const SLOW_USEFUL_TRAVEL_SECONDS = 8.5;
+/** How far the frost reaches in from each edge during slow motion. */
+const FROST_BAND = 32;
 
 type PlayState = 'playing' | 'gameOver';
 
@@ -52,6 +62,13 @@ export class Game extends Scene {
   private hud: Hud;
   /** Danger and golden meteors past the red line, falling off screen. */
   private passing: Meteor[];
+  /** Seconds of slow motion left from a cooldown pickup. */
+  private slowRemaining: number;
+  /** Frosted edges and a light snowfall while slow motion runs. */
+  private frost: Phaser.GameObjects.Container;
+  private snow: Phaser.GameObjects.Particles.ParticleEmitter;
+  /** Slow-motion timer: a cyan bar along the red line that shrinks to nothing. */
+  private slowBar: Phaser.GameObjects.Graphics;
   private unsubscribeLetters: () => void;
 
   constructor() {
@@ -69,6 +86,7 @@ export class Game extends Scene {
     this.lives = STARTING_LIVES;
     this.elapsedSeconds = 0;
     this.passing = [];
+    this.slowRemaining = 0;
     const view = applyView(this);
     this.field = playfieldFor(view.width, view.height);
     this.score = new ScoreSystem();
@@ -79,6 +97,31 @@ export class Game extends Scene {
     this.sfx = new Sfx(this.sound);
 
     this.dangerLine = this.add.graphics();
+    // One frost strip per edge; only a thin band, the middle stays clear.
+    this.frost = this.add
+      .container(0, 0, [
+        this.add.image(0, 0, TEXTURES.frostTop).setOrigin(0),
+        this.add.image(0, 0, TEXTURES.frostTop).setOrigin(0).setFlipY(true),
+        this.add.image(0, 0, TEXTURES.frostLeft).setOrigin(0),
+        this.add.image(0, 0, TEXTURES.frostLeft).setOrigin(0).setFlipX(true),
+      ])
+      .setAlpha(0)
+      .setDepth(0);
+    // A light snowfall: a few small flakes, never enough to hide a word.
+    this.snow = this.add
+      .particles(0, 0, TEXTURES.flake, {
+        lifespan: 7000,
+        frequency: 260,
+        speedY: { min: 22, max: 48 },
+        speedX: { min: -10, max: 10 },
+        rotate: { min: 0, max: 360 },
+        scale: { min: 0.55 * TEXTURE_SCALE, max: 1 * TEXTURE_SCALE },
+        alpha: { start: 0.65, end: 0 },
+        tint: [0xffffff, COLORS.ice],
+        emitting: false,
+      })
+      .setDepth(0);
+    this.slowBar = this.add.graphics().setDepth(3);
     this.ship = new Ship(this, this.field.shipX, this.field.shipY).setDepth(4);
     this.hud = new Hud(this, STARTING_LIVES, this.sfx.muted, () => {
       const muted = this.sfx.toggleMuted();
@@ -109,6 +152,10 @@ export class Game extends Scene {
     }
     const dt = delta / 1000;
     this.elapsedSeconds += dt;
+    // Slow motion scales meteor movement and spawning, not run progress.
+    this.slowRemaining = Math.max(0, this.slowRemaining - dt);
+    const pace = this.pace();
+    this.showSlowMotion();
 
     const difficulty = difficultyFor(
       {
@@ -118,15 +165,16 @@ export class Game extends Scene {
       },
       MODES[this.mode]
     );
-    this.spawner.update(
-      delta,
-      difficulty,
-      this.field,
-      this.lives < STARTING_LIVES
-    );
+    this.spawner.update(delta * pace, difficulty, this.field, {
+      missingLife: this.lives < STARTING_LIVES,
+      slowUseful:
+        MODES[this.mode].slow &&
+        this.slowRemaining === 0 &&
+        difficulty.baseTravelSeconds <= SLOW_USEFUL_TRAVEL_SECONDS,
+    });
 
     for (const meteor of [...this.spawner.meteors]) {
-      meteor.step(dt, this.field);
+      meteor.step(dt * pace, this.field);
       if (meteor.hasReachedDanger) {
         this.onMeteorReachedShip(meteor);
         if (this.state !== 'playing') {
@@ -136,7 +184,7 @@ export class Game extends Scene {
     }
 
     this.passing = this.passing.filter((meteor) => {
-      meteor.step(dt, this.field);
+      meteor.step(dt * pace, this.field);
       if (meteor.isBelow(this.field)) {
         meteor.destroy();
         return false;
@@ -228,6 +276,10 @@ export class Game extends Scene {
       this.onHeartCollected(meteor);
       return;
     }
+    if (meteor.kind === 'slow') {
+      this.onSlowCollected(meteor);
+      return;
+    }
     const golden = meteor.kind === 'golden';
     this.effects.scorePopup(
       meteor.x,
@@ -299,8 +351,8 @@ export class Game extends Scene {
         this.onDangerPenalty(meteor.x, meteor.y);
         return;
       }
-      // A missed heart meteor costs nothing; another comes later.
-      if (meteor.kind === 'heart') {
+      // A missed heart or cooldown pickup costs nothing; another comes later.
+      if (meteor.kind === 'heart' || meteor.kind === 'slow') {
         return;
       }
     }
@@ -328,6 +380,49 @@ export class Game extends Scene {
     );
     this.sfx.bonus();
     this.refreshHud();
+  }
+
+  /** Typing "cooldown" (ranked) slows every meteor down for a while. */
+  private onSlowCollected(meteor: Meteor) {
+    this.slowRemaining = SLOW_SECONDS;
+    this.effects.scorePopup(
+      meteor.x,
+      meteor.y - meteor.radius - 10,
+      'SLOW MOTION',
+      CSS.ice,
+      24
+    );
+    this.sfx.bonus();
+  }
+
+  /** Meteor speed multiplier: 1 normally, SLOW_FACTOR during slow motion. */
+  private pace(): number {
+    if (this.slowRemaining <= 0) {
+      return 1;
+    }
+    const easing = Math.min(1, this.slowRemaining / SLOW_EASE_SECONDS);
+    return 1 - (1 - SLOW_FACTOR) * easing;
+  }
+
+  private showSlowMotion() {
+    const active = this.slowRemaining > 0;
+    // Fades in and out with the slow motion itself.
+    this.frost.setAlpha(active ? (1 - this.pace()) * 2 : 0);
+    if (active && !this.snow.emitting) {
+      this.snow.start();
+    } else if (!active && this.snow.emitting) {
+      this.snow.stop();
+    }
+    this.slowBar.clear();
+    if (active) {
+      // Shrinks toward the middle as the slow motion runs out.
+      const width = this.field.width * (this.slowRemaining / SLOW_SECONDS);
+      const left = (this.field.width - width) / 2;
+      this.slowBar.fillStyle(COLORS.ice, 0.25);
+      this.slowBar.fillRect(left, this.field.dangerY - 3, width, 6);
+      this.slowBar.fillStyle(COLORS.ice, 1);
+      this.slowBar.fillRect(left, this.field.dangerY - 1.5, width, 3);
+    }
   }
 
   /** Danger meteors cost 2-3 points instead of a life. */
@@ -372,6 +467,21 @@ export class Game extends Scene {
       .setPosition(this.field.shipX, this.field.shipY)
       .setScale(this.field.entityScale);
     this.hud.layout(this.field.width, this.field.height);
+    this.layoutFrost();
+    // Flakes start just above the play area, anywhere across its width.
+    const { width } = this.field;
+    const snowZone: Phaser.Types.GameObjects.Particles.ParticleEmitterRandomZoneConfig =
+      {
+        type: 'random',
+        source: {
+          getRandomPoint: (point) => {
+            point.x = Math.random() * width;
+            point.y = -12;
+          },
+        },
+      };
+    this.snow.clearEmitZones();
+    this.snow.addEmitZone(snowZone);
 
     // Faint warning band marking where meteors hit the ship.
     this.dangerLine.clear();
@@ -389,6 +499,24 @@ export class Game extends Scene {
       this.field.width,
       this.field.dangerY
     );
+  }
+
+  /** Places the frost strips along the four edges of the play area. */
+  private layoutFrost() {
+    const { width, height } = this.field;
+    const band = FROST_BAND;
+    const [top, bottom, left, right] = this.frost.list;
+    if (
+      top instanceof Phaser.GameObjects.Image &&
+      bottom instanceof Phaser.GameObjects.Image &&
+      left instanceof Phaser.GameObjects.Image &&
+      right instanceof Phaser.GameObjects.Image
+    ) {
+      top.setPosition(0, 0).setDisplaySize(width, band);
+      bottom.setPosition(0, height - band).setDisplaySize(width, band);
+      left.setPosition(0, 0).setDisplaySize(band, height);
+      right.setPosition(width - band, 0).setDisplaySize(band, height);
+    }
   }
 
   private cleanup() {

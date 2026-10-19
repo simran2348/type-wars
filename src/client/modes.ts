@@ -8,6 +8,8 @@ export type ModeRules = {
   golden: boolean;
   /** Whether heart meteors appear to win back a lost life. */
   heart: boolean;
+  /** Whether "cooldown" pickups appear to slow everything down for a while. */
+  slow: boolean;
   /** Whether finishing a golden word destroys every other meteor on screen. */
   goldenClears: boolean;
   /** Whether this level's leaderboard marks its top three with medallions. */
@@ -21,6 +23,7 @@ export type ModeRules = {
 /**
  * Easy has normal meteors only, medium adds danger, hard adds golden, and
  * ranked is the full game, the only level where meteors speed up over time.
+ * Ranked also gets cooldown pickups that slow the game down for a while.
  * Easy to hard also get heart meteors that give a lost life back, and each
  * allows fewer meteors on screen than the next so the late game stays readable.
  * Each level has its own leaderboards.
@@ -32,6 +35,7 @@ export const MODES: Record<GameMode, ModeRules> = {
     golden: false,
     goldenClears: false,
     heart: true,
+    slow: false,
     medals: false,
     maxMeteors: 4,
     speedRamps: false,
@@ -42,6 +46,7 @@ export const MODES: Record<GameMode, ModeRules> = {
     golden: false,
     goldenClears: false,
     heart: true,
+    slow: false,
     medals: false,
     maxMeteors: 5,
     speedRamps: false,
@@ -52,6 +57,7 @@ export const MODES: Record<GameMode, ModeRules> = {
     golden: true,
     goldenClears: true,
     heart: true,
+    slow: false,
     medals: false,
     maxMeteors: 6,
     speedRamps: false,
@@ -62,6 +68,7 @@ export const MODES: Record<GameMode, ModeRules> = {
     golden: true,
     goldenClears: true,
     heart: false,
+    slow: true,
     medals: true,
     maxMeteors: 7,
     speedRamps: true,
