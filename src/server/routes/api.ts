@@ -22,6 +22,7 @@ import {
   setPendingComment,
   takePendingComment,
 } from '../core/leaderboard';
+import { getScoreThread } from '../core/scoreThread';
 import { journeys, parseJourneyId } from './journeys';
 
 export const api = new Hono();
@@ -154,9 +155,10 @@ api.post('/score', async (c) => {
 });
 
 /**
- * Posts the player's just-finished score as a comment on this post, from
- * their own account. Only ever called from an explicit button press. The
- * score comes from the server's record of the run, never from the request.
+ * Posts the player's just-finished score from their own account, as a reply
+ * to the post's single pinned scores comment (Reddit's rule for generic score
+ * comments). Only ever called from an explicit button press. The score comes
+ * from the server's record of the run, never from the request.
  */
 api.post('/score/comment', async (c) => {
   const { postId } = context;
@@ -177,8 +179,9 @@ api.post('/score/comment', async (c) => {
   }
 
   try {
+    const thread = await getScoreThread(postId);
     await reddit.submitComment({
-      id: postId,
+      id: thread,
       text: `🚀 Scored **${run.score.toLocaleString('en-US')}** in Type Wars (${MODE_LABELS[run.mode]}). Can you beat it?`,
       runAs: 'USER',
     });

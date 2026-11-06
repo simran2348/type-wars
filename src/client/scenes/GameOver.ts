@@ -248,7 +248,9 @@ export class GameOver extends MenuScene {
     try {
       await commentScore();
       if (this.sys.isActive()) {
-        this.commentNote.setText('Comment posted! Check below the post.');
+        this.commentNote.setText(
+          'Posted as a reply to the pinned Scores comment.'
+        );
       }
     } catch (error) {
       console.error(error);
